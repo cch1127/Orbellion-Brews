@@ -110,6 +110,26 @@
   nav.tabs button:hover{ color: var(--parchment); }
   nav.tabs button.active{ color: var(--copper); border-bottom-color: var(--copper); }
 
+  /* ---- Category sub-tabs (used in Inventory) ---- */
+  .cat-tabs{
+    display:flex; gap:6px; margin-bottom: 18px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--border); padding-bottom: 0;
+  }
+  .cat-tab{
+    background: var(--surface); border: 1px solid var(--border); border-bottom: none;
+    color: var(--muted); font-family:'JetBrains Mono',monospace; font-size:0.74rem;
+    letter-spacing: 0.04em; text-transform: uppercase; padding: 9px 16px 8px;
+    border-radius: 6px 6px 0 0; cursor: pointer; transition: all 0.15s ease;
+    position: relative; top: 1px;
+  }
+  .cat-tab:hover{ color: var(--parchment); background: var(--surface-raised); }
+  .cat-tab.active{
+    color: var(--copper); background: var(--surface-raised);
+    border-color: var(--border); border-bottom: 1px solid var(--surface-raised);
+  }
+  .cat-tab .count{ color: var(--muted); margin-left: 6px; }
+  .cat-tab.active .count{ color: var(--copper-dim); }
+
   main{ padding: 28px 32px 80px; max-width: 1200px; margin: 0 auto; }
 
   .panel-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; gap: 16px; flex-wrap: wrap; }
@@ -216,6 +236,8 @@
     tbody td{ border:none; padding: 4px 16px; display:flex; justify-content:space-between; }
     tbody td::before{ content: attr(data-label); font-family:'JetBrains Mono',monospace; font-size:0.68rem; color:var(--muted); text-transform:uppercase; }
     .row-actions{ opacity:1; justify-content:flex-end; padding-top:6px; }
+    .cat-tabs{ overflow-x: auto; flex-wrap: nowrap; }
+    .cat-tab{ flex: 0 0 auto; }
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -309,9 +331,9 @@
         </div>
         <div class="controls-row">
           <input type="text" id="invSearch" placeholder="Search inventory...">
-          <select id="invCategoryFilter"><option value="">All categories</option></select>
         </div>
       </div>
+      <div class="cat-tabs" id="invCatTabs"></div>
       <div id="inventoryTableWrap"></div>
     </section>
   </main>
@@ -395,6 +417,7 @@ const provider = new GoogleAuthProvider();
 let items = {};       // itemId -> item data
 let currentUser = null;
 let editingItemId = null;
+let invActiveCategory = ''; // '' means "All"
 
 // ---------- Auth ----------
 document.getElementById('signInBtn').addEventListener('click', () => {
@@ -611,16 +634,42 @@ function renderCrafting() {
 }
 
 // ---------- Render: Inventory ----------
+function renderInvCatTabs(allRows) {
+  const tabsWrap = document.getElementById('invCatTabs');
+  const cats = Array.from(new Set(allRows.map(([id, it]) => it.category || 'Uncategorized'))).sort();
+
+  // If the currently active category no longer exists (e.g. renamed/deleted), fall back to "All"
+  if (invActiveCategory && !cats.includes(invActiveCategory)) invActiveCategory = '';
+
+  const tabDefs = [{ key: '', label: 'All', count: allRows.length }].concat(
+    cats.map(c => ({ key: c, label: c, count: allRows.filter(([id, it]) => (it.category || 'Uncategorized') === c).length }))
+  );
+
+  tabsWrap.innerHTML = tabDefs.map(t => `
+    <button class="cat-tab ${invActiveCategory === t.key ? 'active' : ''}" data-cat="${escapeHtml(t.key)}">
+      ${escapeHtml(t.label)}<span class="count">${t.count}</span>
+    </button>
+  `).join('');
+
+  tabsWrap.querySelectorAll('.cat-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      invActiveCategory = btn.dataset.cat;
+      renderInventory();
+    });
+  });
+}
+
 function renderInventory() {
   const wrap = document.getElementById('inventoryTableWrap');
   const q = (document.getElementById('invSearch').value || '').toLowerCase();
-  const catFilter = document.getElementById('invCategoryFilter').value;
-  populateCategoryFilter(document.getElementById('invCategoryFilter'), items);
 
-  const rows = Object.entries(items)
+  const allRows = Object.entries(items)
     .filter(([id, it]) => it.name.toLowerCase().includes(q))
-    .filter(([id, it]) => !catFilter || (it.category || 'Uncategorized') === catFilter)
     .sort((a, b) => a[1].name.localeCompare(b[1].name));
+
+  renderInvCatTabs(allRows);
+
+  const rows = allRows.filter(([id, it]) => !invActiveCategory || (it.category || 'Uncategorized') === invActiveCategory);
 
   const totalValue = rows.reduce((s, [id, it]) => s + (Number(it.qty || 0) * Number(it.sellPrice || 0)), 0);
   const totalUnits = rows.reduce((s, [id, it]) => s + Number(it.qty || 0), 0);
@@ -641,7 +690,7 @@ function renderInventory() {
       <thead><tr><th>Item</th><th class="num">Quantity</th><th class="num">Est. value</th><th></th></tr></thead>
       <tbody>
         ${grouped.map(([cat, catRows]) => `
-          <tr class="category-row"><td colspan="4">${escapeHtml(cat)} · ${catRows.length}</td></tr>
+          ${invActiveCategory ? '' : `<tr class="category-row"><td colspan="4">${escapeHtml(cat)} · ${catRows.length}</td></tr>`}
           ${catRows.map(([id, it]) => `
             <tr>
               <td data-label="Item">${escapeHtml(it.name)}</td>
@@ -847,7 +896,6 @@ async function importItems(data) {
 // search listeners
 document.getElementById('itemSearch').addEventListener('input', renderItems);
 document.getElementById('itemCategoryFilter').addEventListener('change', renderItems);
-document.getElementById('invCategoryFilter').addEventListener('change', renderInventory);
 document.getElementById('craftSearch').addEventListener('input', renderCrafting);
 document.getElementById('invSearch').addEventListener('input', renderInventory);
 </script>
