@@ -13,8 +13,8 @@
     --surface: #211c15;
     --surface-raised: #2a2318;
     --border: #3a3122;
-    --copper: #e08a4b;
-    --copper-dim: #a9642f;
+    --copper: #d94f4f;
+    --copper-dim: #a3312f;
     --parchment: #ede4d1;
     --muted: #93876e;
     --profit: #8fae6b;
@@ -25,7 +25,7 @@
   html,body{ margin:0; padding:0; }
   body{
     background:
-      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(224,138,75,0.08), transparent),
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(217,79,79,0.09), transparent),
       var(--bg);
     color: var(--parchment);
     font-family: 'Inter', sans-serif;
@@ -152,7 +152,7 @@
   }
   tbody td{ padding: 13px 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
   tbody tr:last-child td{ border-bottom:none; }
-  tbody tr:hover{ background: rgba(224,138,75,0.04); }
+  tbody tr:hover{ background: rgba(217,79,79,0.05); }
   .category-row td{
     background: var(--surface-raised); color: var(--copper); font-family:'JetBrains Mono',monospace;
     font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 9px 16px;
@@ -234,6 +234,12 @@
   .recipe-row select{ flex:1; }
   .recipe-row input{ width: 70px; }
 
+  .order-form{ display:flex; flex-direction:column; gap:16px; max-width: 480px; }
+  .status-pill{ font-family:'JetBrains Mono',monospace; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; padding:3px 10px; border-radius:20px; border:1px solid var(--border); }
+  .status-pill.pending{ color: var(--copper); border-color: var(--copper-dim); }
+  .status-pill.fulfilled{ color: var(--profit); border-color: var(--profit); }
+  .status-pill.cancelled{ color: var(--muted); }
+
   .close-x{ background:none; border:none; color: var(--muted); cursor:pointer; font-size: 1.3rem; line-height:1; padding:4px; }
   .close-x:hover{ color: var(--parchment); }
 
@@ -278,41 +284,55 @@
 <!-- AUTH SCREEN -->
 <div id="authScreen">
   <div class="brandmark">
-    <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" stroke="#e08a4b" stroke-width="1.4" stroke-linejoin="round"/><path d="M3 7l9 5 9-5M12 12v10" stroke="#e08a4b" stroke-width="1.4" stroke-linejoin="round"/></svg>
+    <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" stroke="#d94f4f" stroke-width="1.4" stroke-linejoin="round"/><path d="M3 7l9 5 9-5M12 12v10" stroke="#d94f4f" stroke-width="1.4" stroke-linejoin="round"/></svg>
   </div>
   <div>
     <span class="pill mono" style="margin-bottom:10px;display:inline-block;">Guild Economy Tool</span>
     <h1>Orbellion Brews</h1>
     <p>Track buy &amp; sell prices, crafting recipes, and shared inventory with your crew. Sign in to open the ledger.</p>
   </div>
-  <button class="btn btn-primary" id="signInBtn">
-    <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.85 2.09-1.81 2.73v2.27h2.93c1.71-1.58 2.7-3.9 2.7-6.64z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.93-2.27c-.81.54-1.85.86-3.03.86-2.33 0-4.3-1.57-5-3.68H1.9v2.34C3.38 15.98 5.98 18 9 18z"/><path fill="#FBBC05" d="M4 10.73c-.18-.54-.28-1.12-.28-1.73s.1-1.19.28-1.73V4.93H1.9C1.33 6.09 1 7.51 1 9s.33 2.91.9 4.07L4 10.73z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.59-2.59C13.46.9 11.43 0 9 0 5.98 0 3.38 2.02 1.9 4.93L4 7.27c.7-2.11 2.67-3.69 5-3.69z"/></svg>
-    Sign in with Google
-  </button>
+  <div class="order-form" style="max-width:320px;">
+    <div class="field">
+      <label>Login ID</label>
+      <input type="text" id="loginUsername" placeholder="e.g. wren" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" id="signInBtn">Sign in</button>
+  </div>
+  <div style="color:var(--muted); font-size:0.8rem;">— or —</div>
+  <button class="btn btn-ghost" id="guestSignInBtn">Continue as guest — place an order</button>
   <p id="authError" style="color:var(--loss); font-size:0.85rem; display:none;"></p>
+  <p style="color:var(--muted); font-size:0.78rem; max-width:340px;">New accounts are created by a guild admin from the Manage People tab — there's no self sign-up.</p>
 </div>
 
 <!-- APP -->
 <div id="app">
   <header class="topbar">
     <div class="topbar-left">
-      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" stroke="#e08a4b" stroke-width="1.4" stroke-linejoin="round"/><path d="M3 7l9 5 9-5M12 12v10" stroke="#e08a4b" stroke-width="1.4" stroke-linejoin="round"/></svg>
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" stroke="#d94f4f" stroke-width="1.4" stroke-linejoin="round"/><path d="M3 7l9 5 9-5M12 12v10" stroke="#d94f4f" stroke-width="1.4" stroke-linejoin="round"/></svg>
       <div>
         <span class="eyebrow">Guild Economy Tool</span>
         <h1>Orbellion Brews</h1>
       </div>
     </div>
     <div class="user-chip">
-      <img id="userAvatar" src="" alt="">
       <span id="userName"></span>
+      <span id="roleBadge" class="pill mono" style="display:none;"></span>
+      <span id="guestBadge" class="pill mono" style="display:none;">Guest</span>
       <button class="btn btn-ghost btn-sm" id="signOutBtn">Sign out</button>
     </div>
   </header>
 
-  <nav class="tabs">
+  <nav class="tabs" id="mainTabs">
     <button class="tab-btn active" data-tab="items">Items</button>
     <button class="tab-btn" data-tab="crafting">Crafting</button>
     <button class="tab-btn" data-tab="inventory">Inventory</button>
+    <button class="tab-btn" data-tab="order">Place Order</button>
+    <button class="tab-btn" data-tab="orders">Orders</button>
+    <button class="tab-btn" data-tab="people">Manage People</button>
   </nav>
 
   <main>
@@ -375,6 +395,82 @@
       <div class="cat-tabs" id="invCatTabs"></div>
       <div id="inventoryTableWrap"></div>
     </section>
+
+    <!-- PLACE ORDER TAB (open to guests and members) -->
+    <section id="tab-order" style="display:none;">
+      <div class="panel-header">
+        <div>
+          <h2>Place an Order</h2>
+          <div class="sub">Pick items and quantities from guild stock. Anyone holding the orders password will see it come in and can fulfill it.</div>
+        </div>
+      </div>
+      <div class="order-form">
+        <div class="field">
+          <label>Your name</label>
+          <input type="text" id="orderName" placeholder="e.g. Wren">
+        </div>
+        <div class="field">
+          <label>Items requested</label>
+          <div class="recipe-list" id="orderItemList"></div>
+          <button class="btn btn-ghost btn-sm" id="addOrderItemBtn" style="align-self:flex-start;">+ Add item</button>
+        </div>
+        <div class="field">
+          <label>Note (optional)</label>
+          <input type="text" id="orderNote" placeholder="Anything else the crafter should know">
+        </div>
+        <button class="btn btn-primary" id="submitOrderBtn" style="align-self:flex-start;">Submit order</button>
+        <p id="orderSubmitError" style="color:var(--loss); font-size:0.85rem; display:none;"></p>
+      </div>
+    </section>
+
+    <!-- ORDERS TAB (open to everyone signed in, including guests) -->
+    <section id="tab-orders" style="display:none;">
+      <div class="stat-strip" id="orderStats"></div>
+      <div class="panel-header">
+        <div>
+          <h2>Orders</h2>
+          <div class="sub">Live queue of guest and member orders. Members can mark them fulfilled once handled.</div>
+        </div>
+        <div class="controls-row">
+          <input type="text" id="orderSearch" placeholder="Search orders...">
+        </div>
+      </div>
+      <div id="ordersTableWrap"></div>
+    </section>
+
+    <!-- MANAGE PEOPLE TAB (admin only) -->
+    <section id="tab-people" style="display:none;">
+      <div class="panel-header">
+        <div>
+          <h2>Manage People</h2>
+          <div class="sub">Create accounts for guild members. Every account tracks its own edits — each person's changes are attributed by name across Items, Inventory, and Orders.</div>
+        </div>
+      </div>
+      <div class="order-form" style="max-width:420px; margin-bottom:28px;">
+        <div class="field">
+          <label>Login ID</label>
+          <input type="text" id="newPersonUsername" placeholder="e.g. wren">
+        </div>
+        <div class="field">
+          <label>Display name</label>
+          <input type="text" id="newPersonDisplayName" placeholder="e.g. Wren">
+        </div>
+        <div class="field">
+          <label>Temporary password</label>
+          <input type="password" id="newPersonPassword" placeholder="At least 6 characters">
+        </div>
+        <div class="field">
+          <label>Role</label>
+          <select id="newPersonRole">
+            <option value="member">Member — full ledger access</option>
+            <option value="admin">Admin — can also add people</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="addPersonBtn" style="align-self:flex-start;">Add person</button>
+        <p id="addPersonError" style="color:var(--loss); font-size:0.85rem; display:none;"></p>
+      </div>
+      <div id="peopleTableWrap"></div>
+    </section>
   </main>
 </div>
 
@@ -428,11 +524,14 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+  getAuth, signInWithEmailAndPassword, signInAnonymously, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getFunctions, httpsCallable
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 
 // ============================================================
 // PASTE YOUR FIREBASE CONFIG HERE (from Firebase Console > Project Settings > Your apps)
@@ -448,50 +547,124 @@ const firebaseConfig = {
   measurementId: "G-3NVGPMF3QR"
 };
 
+// Firebase Auth needs an email-shaped identifier. Guild "Login IDs" are plain
+// usernames, so we map them to a fake address under this domain internally —
+// nobody ever sees or types the fake address.
+const LOGIN_DOMAIN = 'orbellionbrews.local';
+function usernameToEmail(username) {
+  return username.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '') + '@' + LOGIN_DOMAIN;
+}
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
+const functions = getFunctions(app);
 
 let items = {};       // itemId -> item data
+let orders = {};      // orderId -> order data
+let people = {};      // uid -> { username, displayName, role } — admin-only view
 let currentUser = null;
+let currentRole = null;        // 'admin' | 'member' | 'guest'
+let currentDisplayName = '';   // shown in the topbar and stamped on edits
 let editingItemId = null;
 let invActiveCategory = ''; // '' means "All"
 let itemActiveCategory = ''; // '' means "All"
 let invBulkStep = 1; // magnitude applied by the inventory +/- buttons
+let ordersUnsubscribe = null; // handle to stop the orders listener on sign-out
+let peopleUnsubscribe = null; // handle to stop the people listener on sign-out
 
 // ---------- Auth ----------
 document.getElementById('signInBtn').addEventListener('click', () => {
-  signInWithPopup(auth, provider).catch(err => {
+  const errEl = document.getElementById('authError');
+  errEl.style.display = 'none';
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!username || !password) {
+    errEl.textContent = 'Enter both a Login ID and password.';
+    errEl.style.display = 'block';
+    return;
+  }
+  signInWithEmailAndPassword(auth, usernameToEmail(username), password).catch(err => {
+    errEl.textContent = (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found')
+      ? 'Incorrect Login ID or password.'
+      : 'Sign-in failed: ' + err.message;
+    errEl.style.display = 'block';
+  });
+});
+document.getElementById('guestSignInBtn').addEventListener('click', () => {
+  signInAnonymously(auth).catch(err => {
     const el = document.getElementById('authError');
-    el.textContent = "Sign-in failed: " + err.message;
+    el.textContent = "Guest sign-in failed: " + err.message;
     el.style.display = 'block';
   });
 });
 document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   currentUser = user;
-  if (user) {
-    document.getElementById('authScreen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    document.getElementById('userAvatar').src = user.photoURL || '';
-    document.getElementById('userName').textContent = user.displayName || user.email;
-    listenToItems();
-  } else {
+
+  if (ordersUnsubscribe) { ordersUnsubscribe(); ordersUnsubscribe = null; }
+  if (peopleUnsubscribe) { peopleUnsubscribe(); peopleUnsubscribe = null; }
+
+  if (!user) {
     document.getElementById('authScreen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
+    document.getElementById('loginPassword').value = '';
+    return;
   }
+
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  if (user.isAnonymous) {
+    currentRole = 'guest';
+    currentDisplayName = 'Guest';
+    document.getElementById('userName').textContent = '';
+    document.getElementById('roleBadge').style.display = 'none';
+    document.getElementById('guestBadge').style.display = 'inline-block';
+    setTabsForRole('guest');
+  } else {
+    // Custom claims (role, displayName) are set by the createMember Cloud Function
+    // and live on the ID token — refresh once so a just-created account picks them up.
+    let tokenResult = await user.getIdTokenResult();
+    if (!tokenResult.claims.role) tokenResult = await user.getIdTokenResult(true);
+    currentRole = tokenResult.claims.role || 'member';
+    currentDisplayName = tokenResult.claims.displayName || user.email.split('@')[0];
+
+    document.getElementById('userName').textContent = currentDisplayName;
+    document.getElementById('guestBadge').style.display = 'none';
+    document.getElementById('roleBadge').textContent = currentRole;
+    document.getElementById('roleBadge').style.display = 'inline-block';
+    setTabsForRole(currentRole);
+  }
+
+  listenToItems();
+  listenToOrders();
+  if (currentRole === 'admin') listenToPeople();
 });
+
+// Tab visibility by role: guests only place/see orders; members get the full
+// ledger; admins additionally get Manage People.
+function setTabsForRole(role) {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const tab = btn.dataset.tab;
+    let visible;
+    if (role === 'guest') visible = (tab === 'order' || tab === 'orders');
+    else if (role === 'admin') visible = true;
+    else visible = tab !== 'people'; // member
+    btn.style.display = visible ? '' : 'none';
+  });
+  activateTab(role === 'guest' ? 'order' : 'items');
+}
+function activateTab(tabName) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+  document.querySelectorAll('main > section').forEach(s => s.style.display = 'none');
+  document.getElementById('tab-' + tabName).style.display = 'block';
+}
 
 // ---------- Tabs ----------
 document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    document.querySelectorAll('main > section').forEach(s => s.style.display = 'none');
-    document.getElementById('tab-' + btn.dataset.tab).style.display = 'block';
-  });
+  btn.addEventListener('click', () => activateTab(btn.dataset.tab));
 });
 
 // ---------- Firestore live sync ----------
@@ -503,6 +676,8 @@ function listenToItems() {
     renderItems();
     renderCrafting();
     renderInventory();
+    ensureOrderFormSeeded();
+    renderOrders();
   }, (err) => {
     showToast("Sync error: " + err.message);
   });
@@ -730,7 +905,7 @@ async function commitCellEdit(el) {
   const current = it[field] ?? null;
   if (current === value) return; // nothing changed, skip the write
   try {
-    await setDoc(doc(db, 'items', id), { [field]: value, updatedAt: serverTimestamp(), updatedBy: currentUser.email }, { merge: true });
+    await setDoc(doc(db, 'items', id), { [field]: value, updatedAt: serverTimestamp(), updatedBy: currentDisplayName }, { merge: true });
     el.classList.add('cell-saved');
     setTimeout(() => el.classList.remove('cell-saved'), 500);
   } catch (e) {
@@ -865,7 +1040,7 @@ async function adjustQty(id, delta) {
   if (!it) return;
   const newQty = Math.max(0, Number(it.qty || 0) + delta);
   try {
-    await setDoc(doc(db, 'items', id), { ...it, qty: newQty, updatedAt: serverTimestamp(), updatedBy: currentUser.email }, { merge: true });
+    await setDoc(doc(db, 'items', id), { ...it, qty: newQty, updatedAt: serverTimestamp(), updatedBy: currentDisplayName }, { merge: true });
   } catch (e) { showToast('Update failed: ' + e.message); }
 }
 
@@ -892,7 +1067,7 @@ async function commitQtyEdit(el) {
   el.value = value;
   if ((it.qty || 0) === value) return;
   try {
-    await setDoc(doc(db, 'items', id), { qty: value, updatedAt: serverTimestamp(), updatedBy: currentUser.email }, { merge: true });
+    await setDoc(doc(db, 'items', id), { qty: value, updatedAt: serverTimestamp(), updatedBy: currentDisplayName }, { merge: true });
     el.classList.add('cell-saved');
     setTimeout(() => el.classList.remove('cell-saved'), 500);
   } catch (e) {
@@ -1007,7 +1182,7 @@ document.getElementById('itemModalSave').addEventListener('click', async () => {
   try {
     await setDoc(doc(db, 'items', id), {
       name, category, qty, buyPrice, sellPrice, recipe,
-      updatedAt: serverTimestamp(), updatedBy: currentUser.email
+      updatedAt: serverTimestamp(), updatedBy: currentDisplayName
     }, { merge: true });
     showToast('Saved ' + name);
     closeItemModal();
@@ -1095,7 +1270,7 @@ async function importItems(data) {
       sellPrice: entry && entry.sellPrice !== undefined ? entry.sellPrice : (existing ? existing.sellPrice ?? null : null),
       recipe,
       updatedAt: serverTimestamp(),
-      updatedBy: currentUser.email
+      updatedBy: currentDisplayName
     };
 
     try {
@@ -1108,6 +1283,218 @@ async function importItems(data) {
     }
   }
   showToast(`Import complete — ${created} added, ${updated} updated`);
+}
+
+// ---------- Place Order ----------
+function addOrderItemRow(selectedId, qty) {
+  const list = document.getElementById('orderItemList');
+  const row = document.createElement('div');
+  row.className = 'recipe-row';
+  const options = Object.entries(items)
+    .sort((a, b) => a[1].name.localeCompare(b[1].name))
+    .map(([id, it]) => `<option value="${id}" ${id === selectedId ? 'selected' : ''}>${escapeHtml(it.name)}</option>`).join('');
+  row.innerHTML = `
+    <select>${options || '<option disabled>No items available yet</option>'}</select>
+    <input type="number" min="1" value="${qty || 1}" placeholder="Qty">
+    <button class="icon-btn" title="Remove">&times;</button>
+  `;
+  row.querySelector('.icon-btn').addEventListener('click', () => row.remove());
+  list.appendChild(row);
+}
+document.getElementById('addOrderItemBtn').addEventListener('click', () => {
+  const firstId = Object.keys(items)[0];
+  addOrderItemRow(firstId, 1);
+});
+// Seed the form with one row as soon as items are available.
+function ensureOrderFormSeeded() {
+  const list = document.getElementById('orderItemList');
+  if (list.children.length === 0 && Object.keys(items).length > 0) addOrderItemRow(Object.keys(items)[0], 1);
+}
+
+document.getElementById('submitOrderBtn').addEventListener('click', async () => {
+  const errEl = document.getElementById('orderSubmitError');
+  errEl.style.display = 'none';
+  const name = document.getElementById('orderName').value.trim();
+  if (!name) { errEl.textContent = 'Enter your name so the order can be attributed.'; errEl.style.display = 'block'; return; }
+  const orderItems = Array.from(document.querySelectorAll('#orderItemList .recipe-row')).map(row => {
+    const select = row.querySelector('select');
+    const qtyInput = row.querySelector('input');
+    const it = items[select.value];
+    return { itemId: select.value, name: it ? it.name : 'Unknown', qty: Number(qtyInput.value || 1) };
+  }).filter(r => r.itemId);
+  if (orderItems.length === 0) { errEl.textContent = 'Add at least one item to your order.'; errEl.style.display = 'block'; return; }
+  const note = document.getElementById('orderNote').value.trim();
+
+  try {
+    const ref = doc(collection(db, 'orders'));
+    await setDoc(ref, {
+      requesterName: name,
+      items: orderItems,
+      note,
+      status: 'pending',
+      createdAt: serverTimestamp(),
+      createdByUid: currentUser.uid,
+      isGuest: currentUser.isAnonymous
+    });
+    showToast('Order submitted — thanks, ' + name + '!');
+    document.getElementById('orderName').value = '';
+    document.getElementById('orderNote').value = '';
+    document.getElementById('orderItemList').innerHTML = '';
+    ensureOrderFormSeeded();
+  } catch (e) {
+    errEl.textContent = 'Could not submit order: ' + e.message;
+    errEl.style.display = 'block';
+  }
+});
+
+// ---------- Orders (visible to everyone signed in; managing requires member/admin) ----------
+function listenToOrders() {
+  if (ordersUnsubscribe) ordersUnsubscribe();
+  const ordersCol = collection(db, 'orders');
+  ordersUnsubscribe = onSnapshot(ordersCol, (snap) => {
+    orders = {};
+    snap.forEach(d => { orders[d.id] = d.data(); });
+    renderOrders();
+  }, (err) => {
+    showToast('Orders sync error: ' + err.message);
+  });
+}
+
+function renderOrders() {
+  const wrap = document.getElementById('ordersTableWrap');
+  const q = (document.getElementById('orderSearch').value || '').toLowerCase();
+  const canManage = currentRole === 'member' || currentRole === 'admin';
+
+  const rows = Object.entries(orders)
+    .filter(([id, o]) => (o.requesterName || '').toLowerCase().includes(q) || (o.items || []).some(i => i.name.toLowerCase().includes(q)))
+    .sort((a, b) => {
+      const ta = a[1].createdAt ? a[1].createdAt.toMillis() : 0;
+      const tb = b[1].createdAt ? b[1].createdAt.toMillis() : 0;
+      return tb - ta;
+    });
+
+  const pending = Object.values(orders).filter(o => o.status === 'pending').length;
+  document.getElementById('orderStats').innerHTML = `
+    <div class="stat-card"><div class="label">Pending orders</div><div class="value">${pending}</div></div>
+    <div class="stat-card"><div class="label">Total orders</div><div class="value">${Object.keys(orders).length}</div></div>
+  `;
+
+  if (rows.length === 0) {
+    wrap.innerHTML = `<div class="empty-state"><h3>No orders yet</h3><p>Orders placed by guests or members will show up here.</p></div>`;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table>
+      <thead><tr><th>From</th><th>Items</th><th>Note</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        ${rows.map(([id, o]) => {
+          const itemsStr = (o.items || []).map(i => `${i.qty}× ${escapeHtml(i.name)}`).join(', ');
+          const status = o.status || 'pending';
+          return `<tr>
+            <td data-label="From">${escapeHtml(o.requesterName || 'Unknown')}${o.isGuest ? ' <span class="pill">guest</span>' : ''}</td>
+            <td data-label="Items" style="color:var(--muted); font-size:0.85rem;">${itemsStr}</td>
+            <td data-label="Note" style="color:var(--muted); font-size:0.85rem;">${escapeHtml(o.note || '—')}</td>
+            <td data-label="Status"><span class="status-pill ${status}">${status}</span></td>
+            <td>
+              ${canManage ? `<div class="row-actions">
+                ${status !== 'fulfilled' ? `<button class="icon-btn" data-fulfill="${id}" title="Mark fulfilled">✓</button>` : ''}
+                ${status !== 'cancelled' ? `<button class="icon-btn" data-cancel="${id}" title="Cancel">✕</button>` : ''}
+                <button class="icon-btn" data-del-order="${id}" title="Delete">🗑</button>
+              </div>` : ''}
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+
+  wrap.querySelectorAll('[data-fulfill]').forEach(b => b.addEventListener('click', () => updateOrderStatus(b.dataset.fulfill, 'fulfilled')));
+  wrap.querySelectorAll('[data-cancel]').forEach(b => b.addEventListener('click', () => updateOrderStatus(b.dataset.cancel, 'cancelled')));
+  wrap.querySelectorAll('[data-del-order]').forEach(b => b.addEventListener('click', () => deleteOrder(b.dataset.delOrder)));
+}
+
+async function updateOrderStatus(id, status) {
+  try {
+    await setDoc(doc(db, 'orders', id), { status, updatedBy: currentDisplayName, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (e) { showToast('Update failed: ' + e.message); }
+}
+async function deleteOrder(id) {
+  if (!confirm('Delete this order? This cannot be undone.')) return;
+  try {
+    await deleteDoc(doc(db, 'orders', id));
+    showToast('Order deleted');
+  } catch (e) { showToast('Delete failed: ' + e.message); }
+}
+document.getElementById('orderSearch').addEventListener('input', renderOrders);
+
+// ---------- Manage People (admin only) ----------
+document.getElementById('addPersonBtn').addEventListener('click', async () => {
+  const errEl = document.getElementById('addPersonError');
+  errEl.style.display = 'none';
+  const username = document.getElementById('newPersonUsername').value.trim();
+  const displayName = document.getElementById('newPersonDisplayName').value.trim();
+  const password = document.getElementById('newPersonPassword').value;
+  const role = document.getElementById('newPersonRole').value;
+
+  if (!username || !displayName || !password) { errEl.textContent = 'Fill in Login ID, display name, and password.'; errEl.style.display = 'block'; return; }
+  if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('addPersonBtn');
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Adding...';
+  try {
+    const createMember = httpsCallable(functions, 'createMember');
+    await createMember({ username, displayName, password, role });
+    showToast('Added ' + displayName);
+    document.getElementById('newPersonUsername').value = '';
+    document.getElementById('newPersonDisplayName').value = '';
+    document.getElementById('newPersonPassword').value = '';
+    document.getElementById('newPersonRole').value = 'member';
+  } catch (e) {
+    errEl.textContent = e.message && e.message.includes('already-exists') ? 'That Login ID is already taken.' : ('Could not add person: ' + e.message);
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+});
+
+function listenToPeople() {
+  if (peopleUnsubscribe) peopleUnsubscribe();
+  peopleUnsubscribe = onSnapshot(collection(db, 'users'), (snap) => {
+    people = {};
+    snap.forEach(d => { people[d.id] = d.data(); });
+    renderPeople();
+  }, (err) => {
+    showToast('People sync error: ' + err.message);
+  });
+}
+
+function renderPeople() {
+  const wrap = document.getElementById('peopleTableWrap');
+  const rows = Object.entries(people).sort((a, b) => (a[1].displayName || '').localeCompare(b[1].displayName || ''));
+
+  if (rows.length === 0) {
+    wrap.innerHTML = `<div class="empty-state"><h3>No accounts yet</h3><p>Add the first guild member above.</p></div>`;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table>
+      <thead><tr><th>Name</th><th>Login ID</th><th>Role</th></tr></thead>
+      <tbody>
+        ${rows.map(([uid, p]) => `
+          <tr>
+            <td data-label="Name">${escapeHtml(p.displayName || '—')}</td>
+            <td data-label="Login ID" class="num">${escapeHtml(p.username || '—')}</td>
+            <td data-label="Role"><span class="pill">${escapeHtml(p.role || 'member')}</span></td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 // search listeners
