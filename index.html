@@ -133,6 +133,12 @@
   tbody td{ padding: 13px 16px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
   tbody tr:last-child td{ border-bottom:none; }
   tbody tr:hover{ background: rgba(224,138,75,0.04); }
+  .category-row td{
+    background: var(--surface-raised); color: var(--copper); font-family:'JetBrains Mono',monospace;
+    font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 9px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .category-row:hover{ background: var(--surface-raised) !important; }
   .num{ font-family:'JetBrains Mono',monospace; font-variant-numeric: tabular-nums; }
   .pill{
     display:inline-block; font-family:'JetBrains Mono',monospace; font-size:0.68rem;
@@ -270,6 +276,7 @@
         </div>
         <div class="controls-row">
           <input type="text" id="itemSearch" placeholder="Search items...">
+          <select id="itemCategoryFilter"><option value="">All categories</option></select>
           <button class="btn btn-ghost btn-sm" id="importBtn">Import JSON</button>
           <input type="file" id="importFile" accept="application/json" style="display:none;">
           <button class="btn btn-primary btn-sm" id="addItemBtn">+ Add item</button>
@@ -302,6 +309,7 @@
         </div>
         <div class="controls-row">
           <input type="text" id="invSearch" placeholder="Search inventory...">
+          <select id="invCategoryFilter"><option value="">All categories</option></select>
         </div>
       </div>
       <div id="inventoryTableWrap"></div>
@@ -369,7 +377,7 @@ import {
 // PASTE YOUR FIREBASE CONFIG HERE (from Firebase Console > Project Settings > Your apps)
 // ============================================================
 const firebaseConfig = {
- apiKey: "AIzaSyDWQzqFvEdSqcH6gT_xxlyRzhj-38mDZfs",
+  apiKey: "AIzaSyDWQzqFvEdSqcH6gT_xxlyRzhj-38mDZfs",
   authDomain: "orbellionbrews-d19ff.firebaseapp.com",
   databaseURL: "https://orbellionbrews-d19ff-default-rtdb.firebaseio.com",
   projectId: "orbellionbrews-d19ff",
@@ -482,11 +490,33 @@ function craftCostBreakdown(itemId) {
 }
 
 // ---------- Render: Items ----------
+function populateCategoryFilter(selectEl, allItems) {
+  const cats = Array.from(new Set(Object.values(allItems).map(it => it.category || 'Uncategorized'))).sort();
+  const current = selectEl.value;
+  selectEl.innerHTML = '<option value="">All categories</option>' +
+    cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  if (cats.includes(current)) selectEl.value = current;
+}
+
+function groupByCategory(entries) {
+  const groups = {};
+  entries.forEach(([id, it]) => {
+    const cat = it.category || 'Uncategorized';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push([id, it]);
+  });
+  return Object.keys(groups).sort().map(cat => [cat, groups[cat]]);
+}
+
 function renderItems() {
   const wrap = document.getElementById('itemsTableWrap');
   const q = (document.getElementById('itemSearch').value || '').toLowerCase();
+  const catFilter = document.getElementById('itemCategoryFilter').value;
+  populateCategoryFilter(document.getElementById('itemCategoryFilter'), items);
+
   const rows = Object.entries(items)
     .filter(([id, it]) => it.name.toLowerCase().includes(q))
+    .filter(([id, it]) => !catFilter || (it.category || 'Uncategorized') === catFilter)
     .sort((a, b) => a[1].name.localeCompare(b[1].name));
 
   // Stats
@@ -505,28 +535,33 @@ function renderItems() {
     return;
   }
 
+  const grouped = groupByCategory(rows);
+
   wrap.innerHTML = `
     <table>
       <thead><tr>
         <th>Item</th><th>Category</th><th class="num">Buy</th><th class="num">Sell</th><th class="num">Margin</th><th></th>
       </tr></thead>
       <tbody>
-        ${rows.map(([id, it]) => {
-          const margin = (it.sellPrice ?? 0) - (it.buyPrice ?? 0);
-          return `<tr>
-            <td data-label="Item">${escapeHtml(it.name)}</td>
-            <td data-label="Category"><span class="pill">${escapeHtml(it.category || '—')}</span></td>
-            <td data-label="Buy" class="num">${fmt(it.buyPrice)}</td>
-            <td data-label="Sell" class="num">${fmt(it.sellPrice)}</td>
-            <td data-label="Margin" class="num ${margin>=0?'profit':'loss'}">${margin>=0?'+':''}${fmt(margin)}</td>
-            <td>
-              <div class="row-actions">
-                <button class="icon-btn" data-edit="${id}" title="Edit">✎</button>
-                <button class="icon-btn" data-del="${id}" title="Delete">🗑</button>
-              </div>
-            </td>
-          </tr>`;
-        }).join('')}
+        ${grouped.map(([cat, catRows]) => `
+          <tr class="category-row"><td colspan="6">${escapeHtml(cat)} · ${catRows.length}</td></tr>
+          ${catRows.map(([id, it]) => {
+            const margin = (it.sellPrice ?? 0) - (it.buyPrice ?? 0);
+            return `<tr>
+              <td data-label="Item">${escapeHtml(it.name)}</td>
+              <td data-label="Category"><span class="pill">${escapeHtml(it.category || '—')}</span></td>
+              <td data-label="Buy" class="num">${fmt(it.buyPrice)}</td>
+              <td data-label="Sell" class="num">${fmt(it.sellPrice)}</td>
+              <td data-label="Margin" class="num ${margin>=0?'profit':'loss'}">${margin>=0?'+':''}${fmt(margin)}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="icon-btn" data-edit="${id}" title="Edit">✎</button>
+                  <button class="icon-btn" data-del="${id}" title="Delete">🗑</button>
+                </div>
+              </td>
+            </tr>`;
+          }).join('')}
+        `).join('')}
       </tbody>
     </table>
   `;
@@ -579,8 +614,12 @@ function renderCrafting() {
 function renderInventory() {
   const wrap = document.getElementById('inventoryTableWrap');
   const q = (document.getElementById('invSearch').value || '').toLowerCase();
+  const catFilter = document.getElementById('invCategoryFilter').value;
+  populateCategoryFilter(document.getElementById('invCategoryFilter'), items);
+
   const rows = Object.entries(items)
     .filter(([id, it]) => it.name.toLowerCase().includes(q))
+    .filter(([id, it]) => !catFilter || (it.category || 'Uncategorized') === catFilter)
     .sort((a, b) => a[1].name.localeCompare(b[1].name));
 
   const totalValue = rows.reduce((s, [id, it]) => s + (Number(it.qty || 0) * Number(it.sellPrice || 0)), 0);
@@ -595,22 +634,27 @@ function renderInventory() {
     return;
   }
 
+  const grouped = groupByCategory(rows);
+
   wrap.innerHTML = `
     <table>
       <thead><tr><th>Item</th><th class="num">Quantity</th><th class="num">Est. value</th><th></th></tr></thead>
       <tbody>
-        ${rows.map(([id, it]) => `
-          <tr>
-            <td data-label="Item">${escapeHtml(it.name)}</td>
-            <td data-label="Quantity" class="num">${fmt(it.qty || 0)}</td>
-            <td data-label="Value" class="num">${fmt((it.qty||0) * (it.sellPrice||0))}</td>
-            <td>
-              <div class="row-actions" style="opacity:1; justify-content:flex-end;">
-                <button class="icon-btn" data-qty-down="${id}">−</button>
-                <button class="icon-btn" data-qty-up="${id}">+</button>
-              </div>
-            </td>
-          </tr>
+        ${grouped.map(([cat, catRows]) => `
+          <tr class="category-row"><td colspan="4">${escapeHtml(cat)} · ${catRows.length}</td></tr>
+          ${catRows.map(([id, it]) => `
+            <tr>
+              <td data-label="Item">${escapeHtml(it.name)}</td>
+              <td data-label="Quantity" class="num">${fmt(it.qty || 0)}</td>
+              <td data-label="Value" class="num">${fmt((it.qty||0) * (it.sellPrice||0))}</td>
+              <td>
+                <div class="row-actions" style="opacity:1; justify-content:flex-end;">
+                  <button class="icon-btn" data-qty-down="${id}">−</button>
+                  <button class="icon-btn" data-qty-up="${id}">+</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
         `).join('')}
       </tbody>
     </table>
@@ -802,6 +846,8 @@ async function importItems(data) {
 
 // search listeners
 document.getElementById('itemSearch').addEventListener('input', renderItems);
+document.getElementById('itemCategoryFilter').addEventListener('change', renderItems);
+document.getElementById('invCategoryFilter').addEventListener('change', renderInventory);
 document.getElementById('craftSearch').addEventListener('input', renderCrafting);
 document.getElementById('invSearch').addEventListener('input', renderInventory);
 </script>
