@@ -340,7 +340,7 @@
       <div class="panel-header">
         <div>
           <h2>Crafting Margins</h2>
-          <div class="sub">Recipe cost is calculated from the cheaper of each ingredient's buy price or its own craft cost.</div>
+          <div class="sub">Recipe cost is calculated from the cheaper of each ingredient's buy price or its own craft cost. "Craftable now" shows how many you can make with what's currently in inventory — the ingredient that runs out first is highlighted in the recipe.</div>
         </div>
         <div class="controls-row">
           <input type="text" id="craftSearch" placeholder="Search craftable items...">
@@ -553,6 +553,24 @@ function craftCostBreakdown(itemId) {
   return total;
 }
 
+// How many of this item can be crafted right now from on-hand ingredient stock,
+// plus which ingredient is the bottleneck (the one that runs out first).
+function craftableFromStock(itemId) {
+  const it = items[itemId];
+  if (!it || !it.recipe || it.recipe.length === 0) return { count: null, limiting: null };
+  let count = Infinity;
+  let limiting = null;
+  for (const ing of it.recipe) {
+    const ni = items[ing.itemId];
+    const have = ni ? Number(ni.qty || 0) : 0;
+    const need = Number(ing.qty || 1);
+    const possible = need > 0 ? Math.floor(have / need) : Infinity;
+    if (possible < count) { count = possible; limiting = ing.itemId; }
+  }
+  if (!Number.isFinite(count)) count = 0;
+  return { count, limiting };
+}
+
 // ---------- Render: Items ----------
 // Buckets related categories under one tab — e.g. "Combat & Buff Potion", "Healing Potion",
 // etc. all collapse into a single "Potions" tab, while their real category still shows on each row.
@@ -750,16 +768,22 @@ function renderCrafting() {
   wrap.innerHTML = `
     <table>
       <thead><tr>
-        <th>Item</th><th>Recipe</th><th class="num">Craft cost</th><th class="num">Sell</th><th class="num">Profit</th>
+        <th>Item</th><th>Recipe</th><th class="num">Craft cost</th><th class="num">Sell</th><th class="num">Profit</th><th class="num">Craftable now</th>
       </tr></thead>
       <tbody>
         ${rows.map(([id, it]) => {
           const cost = craftCostBreakdown(id);
           const sell = Number(it.sellPrice ?? 0);
           const profit = cost === null ? null : sell - cost;
+          const { count: craftable, limiting } = craftableFromStock(id);
           const recipeStr = it.recipe.map(ing => {
             const ni = items[ing.itemId];
-            return `${ing.qty}× ${ni ? escapeHtml(ni.name) : 'unknown'}`;
+            const isLimiting = ing.itemId === limiting && craftable !== null;
+            const have = ni ? Number(ni.qty || 0) : 0;
+            const label = `${ing.qty}× ${ni ? escapeHtml(ni.name) : 'unknown'}`;
+            return isLimiting
+              ? `<span class="${craftable === 0 ? 'loss' : ''}" title="${have} in stock">${label}</span>`
+              : label;
           }).join(', ');
           return `<tr>
             <td data-label="Item">${escapeHtml(it.name)}</td>
@@ -767,6 +791,7 @@ function renderCrafting() {
             <td data-label="Craft cost" class="num">${cost===null?'—':fmt(cost)}</td>
             <td data-label="Sell" class="num">${fmt(it.sellPrice)}</td>
             <td data-label="Profit" class="num ${profit>=0?'profit':'loss'}">${profit===null?'—':(profit>=0?'+':'')+fmt(profit)}</td>
+            <td data-label="Craftable now" class="num ${craftable===0?'loss':'profit'}">${craftable===null?'—':fmt(craftable)}</td>
           </tr>`;
         }).join('')}
       </tbody>
