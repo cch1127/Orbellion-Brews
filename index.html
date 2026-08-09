@@ -342,7 +342,7 @@
       <div class="panel-header">
         <div>
           <h2>Items</h2>
-          <div class="sub">Buy &amp; sell prices for everything tracked in the ledger. Click a price to edit it directly.</div>
+          <div class="sub" id="itemsSub">Buy &amp; sell prices for everything tracked in the ledger. Click a price to edit it directly.</div>
         </div>
         <div class="controls-row">
           <input type="text" id="itemSearch" placeholder="Search items...">
@@ -417,6 +417,10 @@
         <div class="field">
           <label>Note (optional)</label>
           <input type="text" id="orderNote" placeholder="Anything else the crafter should know">
+        </div>
+        <div class="stat-card" style="max-width:220px;">
+          <div class="label">Estimated total</div>
+          <div class="value num" id="orderRunningTotal">—</div>
         </div>
         <button class="btn btn-primary" id="submitOrderBtn" style="align-self:flex-start;">Submit order</button>
         <p id="orderSubmitError" style="color:var(--loss); font-size:0.85rem; display:none;"></p>
@@ -506,6 +510,7 @@
           <input type="number" id="fSell" placeholder="0" min="0" step="0.01">
         </div>
       </div>
+      <p id="priceAdminNote" style="display:none; color:var(--muted); font-size:0.8rem; margin:-8px 0 0;">Only an admin can change prices.</p>
       <div class="field">
         <label>Crafting recipe (optional)</label>
         <div class="recipe-list" id="recipeList"></div>
@@ -654,6 +659,8 @@ function setTabsForRole(role) {
     else visible = tab !== 'people'; // member
     btn.style.display = visible ? '' : 'none';
   });
+  // Import can bulk-set prices, so it's admin-only like the rest of price editing.
+  document.getElementById('importBtn').style.display = role === 'admin' ? '' : 'none';
   activateTab(role === 'guest' ? 'order' : 'items');
 }
 function activateTab(tabName) {
@@ -829,6 +836,10 @@ function renderItems() {
     const m = (it.sellPrice ?? 0) - (it.buyPrice ?? 0);
     return s + m;
   }, 0) / rows.length : 0;
+  document.getElementById('itemsSub').textContent = currentRole === 'admin'
+    ? "Buy & sell prices for everything tracked in the ledger. Click a price to edit it directly."
+    : "Buy & sell prices for everything tracked in the ledger. Only an admin can change prices.";
+
   document.getElementById('itemStats').innerHTML = `
     <div class="stat-card"><div class="label">Total items</div><div class="value">${total}</div></div>
     <div class="stat-card"><div class="label">Avg buy→sell margin</div><div class="value ${avgMargin>=0?'profit':'loss'}">${fmt(avgMargin)}</div></div>
@@ -851,11 +862,18 @@ function renderItems() {
           <tr class="category-row"><td colspan="6">${escapeHtml(cat)} · ${catRows.length}</td></tr>
           ${catRows.map(([id, it]) => {
             const margin = (it.sellPrice ?? 0) - (it.buyPrice ?? 0);
+            const canEditPrice = currentRole === 'admin';
+            const buyCell = canEditPrice
+              ? `<input type="number" class="cell-input" inputmode="decimal" min="0" step="0.01" placeholder="—" data-id="${id}" data-field="buyPrice" value="${it.buyPrice ?? ''}">`
+              : `<span class="num">${fmt(it.buyPrice)}</span>`;
+            const sellCell = canEditPrice
+              ? `<input type="number" class="cell-input" inputmode="decimal" min="0" step="0.01" placeholder="—" data-id="${id}" data-field="sellPrice" value="${it.sellPrice ?? ''}">`
+              : `<span class="num">${fmt(it.sellPrice)}</span>`;
             return `<tr>
               <td data-label="Item">${escapeHtml(it.name)}</td>
               <td data-label="Category"><span class="pill">${escapeHtml(it.category || '—')}</span></td>
-              <td data-label="Buy" class="num"><input type="number" class="cell-input" inputmode="decimal" min="0" step="0.01" placeholder="—" data-id="${id}" data-field="buyPrice" value="${it.buyPrice ?? ''}"></td>
-              <td data-label="Sell" class="num"><input type="number" class="cell-input" inputmode="decimal" min="0" step="0.01" placeholder="—" data-id="${id}" data-field="sellPrice" value="${it.sellPrice ?? ''}"></td>
+              <td data-label="Buy" class="num">${buyCell}</td>
+              <td data-label="Sell" class="num">${sellCell}</td>
               <td data-label="Margin" class="num margin-cell ${margin>=0?'profit':'loss'}">${margin>=0?'+':''}${fmt(margin)}</td>
               <td>
                 <div class="row-actions">
@@ -1130,6 +1148,10 @@ function openItemModal(id) {
   document.getElementById('fQty').value = it ? (it.qty ?? 0) : 0;
   document.getElementById('fBuy').value = it ? (it.buyPrice ?? '') : '';
   document.getElementById('fSell').value = it ? (it.sellPrice ?? '') : '';
+  const canEditPrice = currentRole === 'admin';
+  document.getElementById('fBuy').disabled = !canEditPrice;
+  document.getElementById('fSell').disabled = !canEditPrice;
+  document.getElementById('priceAdminNote').style.display = canEditPrice ? 'none' : 'block';
   renderRecipeRows(it && it.recipe ? it.recipe : []);
   itemModalOverlay.classList.add('open');
   document.getElementById('fName').focus();
@@ -1286,6 +1308,26 @@ async function importItems(data) {
 }
 
 // ---------- Place Order ----------
+// Uses the item's sell price — what a person would pay/hand over, and what
+// whoever fulfills the order should collect.
+function orderItemUnitPrice(itemId) {
+  const it = items[itemId];
+  return it && it.sellPrice != null ? Number(it.sellPrice) : 0;
+}
+function calcOrderRowsTotal() {
+  return Array.from(document.querySelectorAll('#orderItemList .recipe-row')).reduce((sum, row) => {
+    const select = row.querySelector('select');
+    const qtyInput = row.querySelector('input');
+    if (!select || !select.value) return sum;
+    return sum + orderItemUnitPrice(select.value) * Number(qtyInput.value || 0);
+  }, 0);
+}
+function updateOrderRunningTotal() {
+  const el = document.getElementById('orderRunningTotal');
+  const hasRows = document.querySelectorAll('#orderItemList .recipe-row').length > 0;
+  el.textContent = hasRows ? fmt(calcOrderRowsTotal()) : '—';
+}
+
 function addOrderItemRow(selectedId, qty) {
   const list = document.getElementById('orderItemList');
   const row = document.createElement('div');
@@ -1298,17 +1340,23 @@ function addOrderItemRow(selectedId, qty) {
     <input type="number" min="1" value="${qty || 1}" placeholder="Qty">
     <button class="icon-btn" title="Remove">&times;</button>
   `;
-  row.querySelector('.icon-btn').addEventListener('click', () => row.remove());
+  row.querySelector('.icon-btn').addEventListener('click', () => { row.remove(); updateOrderRunningTotal(); });
   list.appendChild(row);
+  updateOrderRunningTotal();
 }
 document.getElementById('addOrderItemBtn').addEventListener('click', () => {
   const firstId = Object.keys(items)[0];
   addOrderItemRow(firstId, 1);
 });
+// Live-update the total as items/quantities change, delegated so it survives row add/remove.
+document.getElementById('orderItemList').addEventListener('input', updateOrderRunningTotal);
+document.getElementById('orderItemList').addEventListener('change', updateOrderRunningTotal);
+
 // Seed the form with one row as soon as items are available.
 function ensureOrderFormSeeded() {
   const list = document.getElementById('orderItemList');
   if (list.children.length === 0 && Object.keys(items).length > 0) addOrderItemRow(Object.keys(items)[0], 1);
+  updateOrderRunningTotal();
 }
 
 document.getElementById('submitOrderBtn').addEventListener('click', async () => {
@@ -1320,10 +1368,14 @@ document.getElementById('submitOrderBtn').addEventListener('click', async () => 
     const select = row.querySelector('select');
     const qtyInput = row.querySelector('input');
     const it = items[select.value];
-    return { itemId: select.value, name: it ? it.name : 'Unknown', qty: Number(qtyInput.value || 1) };
+    const qty = Number(qtyInput.value || 1);
+    return { itemId: select.value, name: it ? it.name : 'Unknown', qty, unitPrice: orderItemUnitPrice(select.value) };
   }).filter(r => r.itemId);
   if (orderItems.length === 0) { errEl.textContent = 'Add at least one item to your order.'; errEl.style.display = 'block'; return; }
   const note = document.getElementById('orderNote').value.trim();
+  // Snapshot the cost at order time, using current sell prices — so it stays
+  // accurate as a record even if prices change later.
+  const estCost = orderItems.reduce((sum, r) => sum + r.unitPrice * r.qty, 0);
 
   try {
     const ref = doc(collection(db, 'orders'));
@@ -1332,11 +1384,12 @@ document.getElementById('submitOrderBtn').addEventListener('click', async () => 
       items: orderItems,
       note,
       status: 'pending',
+      estCost,
       createdAt: serverTimestamp(),
       createdByUid: currentUser.uid,
       isGuest: currentUser.isAnonymous
     });
-    showToast('Order submitted — thanks, ' + name + '!');
+    showToast('Order submitted — thanks, ' + name + '! Estimated total: ' + fmt(estCost));
     document.getElementById('orderName').value = '';
     document.getElementById('orderNote').value = '';
     document.getElementById('orderItemList').innerHTML = '';
@@ -1373,9 +1426,22 @@ function renderOrders() {
       return tb - ta;
     });
 
+  // Orders placed after this feature shipped carry a snapshotted estCost (the
+  // sell-price total at the moment they were submitted). Older orders don't
+  // have one, so fall back to pricing them at today's sell prices instead.
+  function orderCost(o) {
+    if (o.estCost != null) return o.estCost;
+    return (o.items || []).reduce((sum, i) => {
+      const unit = i.unitPrice != null ? i.unitPrice : orderItemUnitPrice(i.itemId);
+      return sum + unit * (i.qty || 0);
+    }, 0);
+  }
+
   const pending = Object.values(orders).filter(o => o.status === 'pending').length;
+  const pendingValue = Object.values(orders).filter(o => o.status === 'pending').reduce((s, o) => s + orderCost(o), 0);
   document.getElementById('orderStats').innerHTML = `
     <div class="stat-card"><div class="label">Pending orders</div><div class="value">${pending}</div></div>
+    <div class="stat-card"><div class="label">Pending value</div><div class="value">${fmt(pendingValue)}</div></div>
     <div class="stat-card"><div class="label">Total orders</div><div class="value">${Object.keys(orders).length}</div></div>
   `;
 
@@ -1386,7 +1452,7 @@ function renderOrders() {
 
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>From</th><th>Items</th><th>Note</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>From</th><th>Items</th><th class="num">Est. Cost</th><th>Note</th><th>Status</th><th></th></tr></thead>
       <tbody>
         ${rows.map(([id, o]) => {
           const itemsStr = (o.items || []).map(i => `${i.qty}× ${escapeHtml(i.name)}`).join(', ');
@@ -1394,6 +1460,7 @@ function renderOrders() {
           return `<tr>
             <td data-label="From">${escapeHtml(o.requesterName || 'Unknown')}${o.isGuest ? ' <span class="pill">guest</span>' : ''}</td>
             <td data-label="Items" style="color:var(--muted); font-size:0.85rem;">${itemsStr}</td>
+            <td data-label="Est. Cost" class="num">${fmt(orderCost(o))}</td>
             <td data-label="Note" style="color:var(--muted); font-size:0.85rem;">${escapeHtml(o.note || '—')}</td>
             <td data-label="Status"><span class="status-pill ${status}">${status}</span></td>
             <td>
@@ -1483,18 +1550,38 @@ function renderPeople() {
 
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>Name</th><th>Login ID</th><th>Role</th></tr></thead>
+      <thead><tr><th>Name</th><th>Login ID</th><th>Role</th><th></th></tr></thead>
       <tbody>
-        ${rows.map(([uid, p]) => `
-          <tr>
+        ${rows.map(([uid, p]) => {
+          const isSelf = uid === currentUser.uid;
+          return `<tr>
             <td data-label="Name">${escapeHtml(p.displayName || '—')}</td>
             <td data-label="Login ID" class="num">${escapeHtml(p.username || '—')}</td>
             <td data-label="Role"><span class="pill">${escapeHtml(p.role || 'member')}</span></td>
-          </tr>
-        `).join('')}
+            <td>
+              <div class="row-actions">
+                ${isSelf ? '' : `<button class="icon-btn" data-remove-person="${uid}" title="Remove person">🗑</button>`}
+              </div>
+            </td>
+          </tr>`;
+        }).join('')}
       </tbody>
     </table>
   `;
+
+  wrap.querySelectorAll('[data-remove-person]').forEach(b => b.addEventListener('click', () => removePerson(b.dataset.removePerson, people[b.dataset.removePerson])));
+}
+
+async function removePerson(uid, person) {
+  const label = (person && person.displayName) || 'this person';
+  if (!confirm(`Remove ${label}'s account? They will no longer be able to sign in. This can't be undone.`)) return;
+  try {
+    const removeMember = httpsCallable(functions, 'removeMember');
+    await removeMember({ uid });
+    showToast('Removed ' + label);
+  } catch (e) {
+    showToast('Could not remove person: ' + e.message);
+  }
 }
 
 // search listeners
