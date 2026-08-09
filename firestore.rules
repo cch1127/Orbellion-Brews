@@ -1,13 +1,48 @@
-{
-  "name": "orbellion-brews-functions",
-  "description": "Cloud Functions for Orbellion Brews account management",
-  "engines": {
-    "node": "20"
-  },
-  "main": "index.js",
-  "dependencies": {
-    "firebase-admin": "^12.1.0",
-    "firebase-functions": "^5.0.0"
-  },
-  "private": true
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Members and admins are anyone with a real (non-anonymous) account —
+    // i.e. anyone the createMember Cloud Function has stamped with a role.
+    function isMember() {
+      return isSignedIn() && request.auth.token.role in ['member', 'admin'];
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.role == 'admin';
+    }
+
+    // Item catalog: guests need to read it to know what they can order, but
+    // only members/admins can add, edit, or delete items.
+    match /items/{itemId} {
+      allow read: if isSignedIn();
+      allow write: if isMember();
+    }
+
+    // Orders: anyone signed in (guest or member) can place one, and anyone
+    // signed in can view the queue. Managing an order (marking it fulfilled,
+    // cancelling, deleting) is member/admin only.
+    match /orders/{orderId} {
+      allow create: if isSignedIn();
+      allow read: if isSignedIn();
+      allow update, delete: if isMember();
+    }
+
+    // Account directory: only written by the createMember Cloud Function
+    // (Admin SDK bypasses these rules entirely). Admins can list everyone;
+    // a person can read their own profile.
+    match /users/{userId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow write: if false;
+    }
+
+    // Default deny for anything else.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
 }
