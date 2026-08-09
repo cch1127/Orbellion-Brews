@@ -84,3 +84,48 @@ exports.createMember = onCall(async (request) => {
 
   return { success: true, uid: userRecord.uid };
 });
+
+/**
+ * Callable function: removeMember({ uid })
+ *
+ * Admin-only. Deletes the person's Firebase Auth account (so they can no
+ * longer sign in) and their profile doc in Firestore's `users` collection.
+ * Does not touch anything they've already created — items, orders, and
+ * updatedBy/createdBy stamps referencing their old uid are left as-is,
+ * since deleting those would erase real ledger history.
+ */
+exports.removeMember = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in before removing people.");
+  }
+  if (request.auth.token.role !== "admin") {
+    throw new HttpsError(
+      "permission-denied",
+      "Only an admin account can remove people."
+    );
+  }
+
+  const { uid } = request.data || {};
+  if (!uid) {
+    throw new HttpsError("invalid-argument", "uid is required.");
+  }
+  if (uid === request.auth.uid) {
+    throw new HttpsError(
+      "failed-precondition",
+      "You can't remove your own account. Have another admin do it."
+    );
+  }
+
+  try {
+    await admin.auth().deleteUser(uid);
+  } catch (err) {
+    if (err.code !== "auth/user-not-found") {
+      throw new HttpsError("internal", "Could not delete the account: " + err.message);
+    }
+    // Already gone from Auth — still clean up the Firestore profile below.
+  }
+
+  await admin.firestore().collection("users").doc(uid).delete();
+
+  return { success: true };
+});
