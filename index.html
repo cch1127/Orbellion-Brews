@@ -171,6 +171,23 @@
   .cell-input::placeholder{ color: var(--muted); }
   .cell-input.cell-saved{ border-color: var(--profit); }
   @media (max-width: 640px){ .cell-input{ width: 100%; text-align: right; } }
+
+  .step-control{ display:flex; align-items:center; gap:8px; }
+  .step-label{ font-family:'JetBrains Mono',monospace; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); }
+  .step-chips{ display:flex; gap:4px; }
+  .step-chip{
+    background: var(--surface); border:1px solid var(--border); color: var(--muted);
+    font-family:'JetBrains Mono',monospace; font-size:0.78rem; padding:6px 10px; border-radius:6px; cursor:pointer;
+    transition: all 0.15s ease;
+  }
+  .step-chip:hover{ color: var(--parchment); border-color: var(--copper-dim); }
+  .step-chip.active{ color:#1a1305; background: var(--copper); border-color: var(--copper); font-weight:600; }
+  .step-custom{ width:74px; }
+
+  .qty-cell{ display:flex; align-items:center; justify-content:flex-end; gap:6px; }
+  .qty-input{ width:60px; text-align:center; }
+  .qty-btn{ width:auto; min-width:28px; padding:0 8px; font-family:'JetBrains Mono',monospace; font-size:0.8rem; }
+  @media (max-width: 640px){ .qty-cell{ justify-content:flex-end; flex:1; } }
   .pill{
     display:inline-block; font-family:'JetBrains Mono',monospace; font-size:0.68rem;
     padding: 2px 9px; border-radius: 20px; border: 1px solid var(--border); color: var(--muted);
@@ -338,10 +355,21 @@
       <div class="panel-header">
         <div>
           <h2>Inventory</h2>
-          <div class="sub">Shared stock counts — anyone in the guild can update quantities.</div>
+          <div class="sub">Shared stock counts — anyone in the guild can update quantities. Type an exact count, or use the +/− at your chosen bulk step.</div>
         </div>
         <div class="controls-row">
           <input type="text" id="invSearch" placeholder="Search inventory...">
+          <div class="step-control">
+            <span class="step-label">Bulk step</span>
+            <div class="step-chips" id="stepChips">
+              <button type="button" class="step-chip" data-step="1">1</button>
+              <button type="button" class="step-chip" data-step="5">5</button>
+              <button type="button" class="step-chip" data-step="10">10</button>
+              <button type="button" class="step-chip" data-step="25">25</button>
+              <button type="button" class="step-chip" data-step="50">50</button>
+            </div>
+            <input type="number" id="invStepCustom" class="step-custom" min="1" step="1" placeholder="Custom">
+          </div>
         </div>
       </div>
       <div class="cat-tabs" id="invCatTabs"></div>
@@ -430,6 +458,7 @@ let currentUser = null;
 let editingItemId = null;
 let invActiveCategory = ''; // '' means "All"
 let itemActiveCategory = ''; // '' means "All"
+let invBulkStep = 1; // magnitude applied by the inventory +/- buttons
 
 // ---------- Auth ----------
 document.getElementById('signInBtn').addEventListener('click', () => {
@@ -748,6 +777,7 @@ function renderCrafting() {
 // ---------- Render: Inventory ----------
 function renderInventory() {
   const wrap = document.getElementById('inventoryTableWrap');
+  const focusInfo = captureCellFocus(wrap);
   const q = (document.getElementById('invSearch').value || '').toLowerCase();
 
   const allRows = Object.entries(items)
@@ -774,24 +804,25 @@ function renderInventory() {
   }
 
   const grouped = groupByCategory(rows);
+  const stepLabel = invBulkStep === 1 ? '' : String(invBulkStep);
 
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>Item</th><th class="num">Quantity</th><th class="num">Est. value</th><th></th></tr></thead>
+      <thead><tr><th>Item</th><th class="num">Quantity</th><th class="num">Est. value</th></tr></thead>
       <tbody>
         ${grouped.map(([cat, catRows]) => `
-          <tr class="category-row"><td colspan="4">${escapeHtml(cat)} · ${catRows.length}</td></tr>
+          <tr class="category-row"><td colspan="3">${escapeHtml(cat)} · ${catRows.length}</td></tr>
           ${catRows.map(([id, it]) => `
             <tr>
               <td data-label="Item">${escapeHtml(it.name)}</td>
-              <td data-label="Quantity" class="num">${fmt(it.qty || 0)}</td>
-              <td data-label="Value" class="num">${fmt((it.qty||0) * (it.sellPrice||0))}</td>
-              <td>
-                <div class="row-actions" style="opacity:1; justify-content:flex-end;">
-                  <button class="icon-btn" data-qty-down="${id}">−</button>
-                  <button class="icon-btn" data-qty-up="${id}">+</button>
+              <td data-label="Quantity" class="num">
+                <div class="qty-cell">
+                  <button class="icon-btn qty-btn" data-qty-down="${id}" title="Sell ${invBulkStep} (subtract)">−${stepLabel}</button>
+                  <input type="number" class="cell-input qty-input" data-id="${id}" data-field="qty" value="${it.qty ?? 0}" min="0" step="1">
+                  <button class="icon-btn qty-btn" data-qty-up="${id}" title="Buy ${invBulkStep} (add)">+${stepLabel}</button>
                 </div>
               </td>
+              <td data-label="Value" class="num value-cell">${fmt((it.qty||0) * (it.sellPrice||0))}</td>
             </tr>
           `).join('')}
         `).join('')}
@@ -799,8 +830,9 @@ function renderInventory() {
     </table>
   `;
 
-  wrap.querySelectorAll('[data-qty-up]').forEach(b => b.addEventListener('click', () => adjustQty(b.dataset.qtyUp, 1)));
-  wrap.querySelectorAll('[data-qty-down]').forEach(b => b.addEventListener('click', () => adjustQty(b.dataset.qtyDown, -1)));
+  wrap.querySelectorAll('[data-qty-up]').forEach(b => b.addEventListener('click', () => adjustQty(b.dataset.qtyUp, invBulkStep)));
+  wrap.querySelectorAll('[data-qty-down]').forEach(b => b.addEventListener('click', () => adjustQty(b.dataset.qtyDown, -invBulkStep)));
+  restoreCellFocus(wrap, focusInfo);
 }
 
 async function adjustQty(id, delta) {
@@ -811,6 +843,76 @@ async function adjustQty(id, delta) {
     await setDoc(doc(db, 'items', id), { ...it, qty: newQty, updatedAt: serverTimestamp(), updatedBy: currentUser.email }, { merge: true });
   } catch (e) { showToast('Update failed: ' + e.message); }
 }
+
+// ---------- Inline quantity editing (Inventory table) ----------
+// Lets people type an exact count directly, in addition to the step +/- buttons.
+function updateLiveInventoryValue(input) {
+  const row = input.closest('tr');
+  if (!row) return;
+  const id = input.dataset.id;
+  const it = items[id];
+  if (!it) return;
+  const qty = input.value === '' ? 0 : Number(input.value);
+  const valueCell = row.querySelector('.value-cell');
+  if (valueCell) valueCell.textContent = fmt(qty * Number(it.sellPrice || 0));
+}
+
+async function commitQtyEdit(el) {
+  const id = el.dataset.id;
+  const it = items[id];
+  if (!it) return;
+  const raw = el.value.trim();
+  if (raw !== '' && isNaN(Number(raw))) { showToast('Enter a valid number'); return; }
+  const value = Math.max(0, Math.round(raw === '' ? 0 : Number(raw)));
+  el.value = value;
+  if ((it.qty || 0) === value) return;
+  try {
+    await setDoc(doc(db, 'items', id), { qty: value, updatedAt: serverTimestamp(), updatedBy: currentUser.email }, { merge: true });
+    el.classList.add('cell-saved');
+    setTimeout(() => el.classList.remove('cell-saved'), 500);
+  } catch (e) {
+    showToast('Update failed: ' + e.message);
+  }
+}
+
+const inventoryTableWrapEl = document.getElementById('inventoryTableWrap');
+inventoryTableWrapEl.addEventListener('input', (e) => {
+  if (e.target.classList.contains('qty-input')) updateLiveInventoryValue(e.target);
+});
+inventoryTableWrapEl.addEventListener('change', (e) => {
+  if (e.target.classList.contains('qty-input')) commitQtyEdit(e.target);
+});
+inventoryTableWrapEl.addEventListener('keydown', (e) => {
+  if (e.target.classList.contains('qty-input') && e.key === 'Enter') {
+    e.preventDefault();
+    e.target.blur();
+  }
+});
+
+// ---------- Bulk step control ----------
+// Sets the amount the inventory +/- buttons add or remove, for fast bulk sales/buys.
+function syncStepControls() {
+  const presets = [1, 5, 10, 25, 50];
+  document.querySelectorAll('.step-chip').forEach(chip => {
+    chip.classList.toggle('active', Number(chip.dataset.step) === invBulkStep);
+  });
+  const customEl = document.getElementById('invStepCustom');
+  customEl.value = presets.includes(invBulkStep) ? '' : invBulkStep;
+}
+document.querySelectorAll('.step-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    invBulkStep = Number(chip.dataset.step);
+    syncStepControls();
+    renderInventory();
+  });
+});
+document.getElementById('invStepCustom').addEventListener('change', (e) => {
+  const v = Math.max(1, Math.round(Number(e.target.value) || 1));
+  invBulkStep = v;
+  syncStepControls();
+  renderInventory();
+});
+syncStepControls();
 
 // ---------- Item modal ----------
 const itemModalOverlay = document.getElementById('itemModalOverlay');
