@@ -32,11 +32,11 @@
     min-height: 100vh;
   }
   ::selection{ background: var(--copper-dim); color: var(--parchment); }
- 
+
   h1,h2,h3{ font-family: 'Fraunces', serif; font-weight: 600; margin: 0; }
- 
+
   .mono{ font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; }
- 
+
   /* ---- Auth screen ---- */
   #authScreen{
     min-height: 100vh;
@@ -76,7 +76,7 @@
   .btn-ghost{ background: transparent; border-color: var(--border); }
   .btn-danger{ color: var(--loss); }
   .btn-sm{ padding: 6px 12px; font-size: 0.82rem; }
- 
+
   /* ---- App shell ---- */
   #app{ display:none; min-height: 100vh; }
   header.topbar{
@@ -97,7 +97,7 @@
   .user-chip{ display:flex; align-items:center; gap:10px; }
   .user-chip img{ width:30px; height:30px; border-radius:50%; border:1px solid var(--border); }
   .user-chip span{ font-size: 0.85rem; color: var(--muted); }
- 
+
   nav.tabs{
     display:flex; gap:4px; padding: 0 32px; border-bottom: 1px solid var(--border);
     background: rgba(23,20,15,0.4);
@@ -109,7 +109,7 @@
   }
   nav.tabs button:hover{ color: var(--parchment); }
   nav.tabs button.active{ color: var(--copper); border-bottom-color: var(--copper); }
- 
+
   /* ---- Category sub-tabs (used in Inventory) ---- */
   .cat-tabs{
     display:flex; gap:6px; margin-bottom: 18px; flex-wrap: wrap;
@@ -129,13 +129,13 @@
   }
   .cat-tab .count{ color: var(--muted); margin-left: 6px; }
   .cat-tab.active .count{ color: var(--copper-dim); }
- 
+
   main{ padding: 28px 32px 80px; max-width: 1200px; margin: 0 auto; }
- 
+
   .panel-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; gap: 16px; flex-wrap: wrap; }
   .panel-header h2{ font-size: 1.5rem; }
   .panel-header .sub{ color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
- 
+
   .controls-row{ display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
   input[type=text], input[type=number], select{
     background: var(--surface); border: 1px solid var(--border); color: var(--parchment);
@@ -143,7 +143,7 @@
   }
   input:focus, select:focus{ outline: none; border-color: var(--copper-dim); }
   input[type=text]::placeholder{ color: var(--muted); }
- 
+
   table{ width:100%; border-collapse: collapse; background: var(--surface); border-radius:8px; overflow:hidden; box-shadow: var(--shadow); }
   thead th{
     text-align:left; font-family:'JetBrains Mono',monospace; font-size:0.7rem; letter-spacing:0.08em;
@@ -160,6 +160,17 @@
   }
   .category-row:hover{ background: var(--surface-raised) !important; }
   .num{ font-family:'JetBrains Mono',monospace; font-variant-numeric: tabular-nums; }
+  .cell-input{
+    background: transparent; border: 1px solid transparent; color: var(--parchment);
+    font-family:'JetBrains Mono',monospace; font-variant-numeric: tabular-nums; font-size: 0.9rem;
+    padding: 6px 8px; border-radius: 5px; width: 90px; text-align: right;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .cell-input:hover{ border-color: var(--border); background: var(--surface); }
+  .cell-input:focus{ outline:none; border-color: var(--copper-dim); background: var(--surface); }
+  .cell-input::placeholder{ color: var(--muted); }
+  .cell-input.cell-saved{ border-color: var(--profit); }
+  @media (max-width: 640px){ .cell-input{ width: 100%; text-align: right; } }
   .pill{
     display:inline-block; font-family:'JetBrains Mono',monospace; font-size:0.68rem;
     padding: 2px 9px; border-radius: 20px; border: 1px solid var(--border); color: var(--muted);
@@ -173,13 +184,13 @@
     border-radius:5px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
   }
   .icon-btn:hover{ color: var(--parchment); border-color: var(--copper-dim); }
- 
+
   .empty-state{
     text-align:center; padding: 60px 20px; color: var(--muted); background: var(--surface);
     border-radius: 8px; border: 1px dashed var(--border);
   }
   .empty-state h3{ color: var(--parchment); margin-bottom: 8px; font-size: 1.1rem; }
- 
+
   /* ---- Modal ---- */
   .modal-overlay{
     position: fixed; inset:0; background: rgba(10,8,5,0.65); backdrop-filter: blur(3px);
@@ -200,15 +211,15 @@
   .field label{ font-size: 0.78rem; color: var(--muted); font-family:'JetBrains Mono',monospace; letter-spacing: 0.03em; }
   .field-row{ display:flex; gap:12px; }
   .field-row .field{ flex:1; }
- 
+
   .recipe-list{ display:flex; flex-direction:column; gap:8px; }
   .recipe-row{ display:flex; gap:8px; align-items:center; }
   .recipe-row select{ flex:1; }
   .recipe-row input{ width: 70px; }
- 
+
   .close-x{ background:none; border:none; color: var(--muted); cursor:pointer; font-size: 1.3rem; line-height:1; padding:4px; }
   .close-x:hover{ color: var(--parchment); }
- 
+
   .stat-strip{ display:flex; gap:14px; margin-bottom: 22px; flex-wrap: wrap; }
   .stat-card{
     background: var(--surface); border:1px solid var(--border); border-radius:8px;
@@ -216,7 +227,7 @@
   }
   .stat-card .label{ font-family:'JetBrains Mono',monospace; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color: var(--muted); }
   .stat-card .value{ font-family:'JetBrains Mono',monospace; font-size: 1.6rem; margin-top: 6px; color: var(--copper); }
- 
+
   .toast{
     position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
     background: var(--surface-raised); border: 1px solid var(--copper-dim); color: var(--parchment);
@@ -224,7 +235,7 @@
     z-index: 200; opacity:0; pointer-events:none; transition: opacity 0.2s, transform 0.2s;
   }
   .toast.show{ opacity:1; transform: translateX(-50%) translateY(-4px); }
- 
+
   @media (max-width: 640px){
     header.topbar{ padding: 14px 16px; }
     nav.tabs{ padding: 0 16px; overflow-x:auto; }
@@ -239,14 +250,14 @@
     .cat-tabs{ overflow-x: auto; flex-wrap: nowrap; }
     .cat-tab{ flex: 0 0 auto; }
   }
- 
+
   @media (prefers-reduced-motion: reduce){
     *{ animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
 </style>
 </head>
 <body>
- 
+
 <!-- AUTH SCREEN -->
 <div id="authScreen">
   <div class="brandmark">
@@ -263,7 +274,7 @@
   </button>
   <p id="authError" style="color:var(--loss); font-size:0.85rem; display:none;"></p>
 </div>
- 
+
 <!-- APP -->
 <div id="app">
   <header class="topbar">
@@ -280,13 +291,13 @@
       <button class="btn btn-ghost btn-sm" id="signOutBtn">Sign out</button>
     </div>
   </header>
- 
+
   <nav class="tabs">
     <button class="tab-btn active" data-tab="items">Items</button>
     <button class="tab-btn" data-tab="crafting">Crafting</button>
     <button class="tab-btn" data-tab="inventory">Inventory</button>
   </nav>
- 
+
   <main>
     <!-- ITEMS TAB -->
     <section id="tab-items">
@@ -294,19 +305,19 @@
       <div class="panel-header">
         <div>
           <h2>Items</h2>
-          <div class="sub">Buy &amp; sell prices for everything tracked in the ledger.</div>
+          <div class="sub">Buy &amp; sell prices for everything tracked in the ledger. Click a price to edit it directly.</div>
         </div>
         <div class="controls-row">
           <input type="text" id="itemSearch" placeholder="Search items...">
-          <select id="itemCategoryFilter"><option value="">All categories</option></select>
           <button class="btn btn-ghost btn-sm" id="importBtn">Import JSON</button>
           <input type="file" id="importFile" accept="application/json" style="display:none;">
           <button class="btn btn-primary btn-sm" id="addItemBtn">+ Add item</button>
         </div>
       </div>
+      <div class="cat-tabs" id="itemCatTabs"></div>
       <div id="itemsTableWrap"></div>
     </section>
- 
+
     <!-- CRAFTING TAB -->
     <section id="tab-crafting" style="display:none;">
       <div class="panel-header">
@@ -320,7 +331,7 @@
       </div>
       <div id="craftingTableWrap"></div>
     </section>
- 
+
     <!-- INVENTORY TAB -->
     <section id="tab-inventory" style="display:none;">
       <div class="stat-strip" id="invStats"></div>
@@ -338,7 +349,7 @@
     </section>
   </main>
 </div>
- 
+
 <!-- ITEM MODAL -->
 <div class="modal-overlay" id="itemModalOverlay">
   <div class="modal">
@@ -383,9 +394,9 @@
     </div>
   </div>
 </div>
- 
+
 <div class="toast" id="toast"></div>
- 
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
@@ -394,7 +405,7 @@ import {
 import {
   getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
- 
+
 // ============================================================
 // PASTE YOUR FIREBASE CONFIG HERE (from Firebase Console > Project Settings > Your apps)
 // ============================================================
@@ -408,17 +419,18 @@ const firebaseConfig = {
   appId: "1:837975081492:web:c8cd5e56f8002820c59d01",
   measurementId: "G-3NVGPMF3QR"
 };
- 
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
- 
+
 let items = {};       // itemId -> item data
 let currentUser = null;
 let editingItemId = null;
 let invActiveCategory = ''; // '' means "All"
- 
+let itemActiveCategory = ''; // '' means "All"
+
 // ---------- Auth ----------
 document.getElementById('signInBtn').addEventListener('click', () => {
   signInWithPopup(auth, provider).catch(err => {
@@ -428,7 +440,7 @@ document.getElementById('signInBtn').addEventListener('click', () => {
   });
 });
 document.getElementById('signOutBtn').addEventListener('click', () => signOut(auth));
- 
+
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
   if (user) {
@@ -442,7 +454,7 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById('app').style.display = 'none';
   }
 });
- 
+
 // ---------- Tabs ----------
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -452,7 +464,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById('tab-' + btn.dataset.tab).style.display = 'block';
   });
 });
- 
+
 // ---------- Firestore live sync ----------
 function listenToItems() {
   const itemsCol = collection(db, 'items');
@@ -466,19 +478,19 @@ function listenToItems() {
     showToast("Sync error: " + err.message);
   });
 }
- 
+
 function fmt(n) {
   if (n === null || n === undefined || isNaN(n)) return '—';
   return Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
- 
+
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2200);
 }
- 
+
 // Recursive craft cost: cheaper of buy price vs. sum of ingredient effective costs
 function effectiveCost(itemId, visiting = new Set()) {
   const it = items[itemId];
@@ -499,7 +511,7 @@ function effectiveCost(itemId, visiting = new Set()) {
   if (buy === null) return craftTotal;
   return Math.min(buy, craftTotal);
 }
- 
+
 function craftCostBreakdown(itemId) {
   const it = items[itemId];
   if (!it || !it.recipe || it.recipe.length === 0) return null;
@@ -511,16 +523,40 @@ function craftCostBreakdown(itemId) {
   }
   return total;
 }
- 
+
 // ---------- Render: Items ----------
-function populateCategoryFilter(selectEl, allItems) {
-  const cats = Array.from(new Set(Object.values(allItems).map(it => it.category || 'Uncategorized'))).sort();
-  const current = selectEl.value;
-  selectEl.innerHTML = '<option value="">All categories</option>' +
-    cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-  if (cats.includes(current)) selectEl.value = current;
+// Buckets related categories under one tab — e.g. "Combat & Buff Potion", "Healing Potion",
+// etc. all collapse into a single "Potions" tab, while their real category still shows on each row.
+function tabGroupOf(category) {
+  const c = category || 'Uncategorized';
+  return /potion/i.test(c) ? 'Potions' : c;
 }
- 
+
+// Shared tab-bar renderer used by both the Items and Inventory tabs.
+// Returns the (possibly corrected) active category, in case the previous selection no longer exists.
+function renderCatTabs(tabsWrapId, allRows, activeCategory, onSelect) {
+  const tabsWrap = document.getElementById(tabsWrapId);
+  const cats = Array.from(new Set(allRows.map(([id, it]) => tabGroupOf(it.category)))).sort();
+
+  if (activeCategory && !cats.includes(activeCategory)) activeCategory = '';
+
+  const tabDefs = [{ key: '', label: 'All', count: allRows.length }].concat(
+    cats.map(c => ({ key: c, label: c, count: allRows.filter(([id, it]) => tabGroupOf(it.category) === c).length }))
+  );
+
+  tabsWrap.innerHTML = tabDefs.map(t => `
+    <button class="cat-tab ${activeCategory === t.key ? 'active' : ''}" data-cat="${escapeHtml(t.key)}">
+      ${escapeHtml(t.label)}<span class="count">${t.count}</span>
+    </button>
+  `).join('');
+
+  tabsWrap.querySelectorAll('.cat-tab').forEach(btn => {
+    btn.addEventListener('click', () => onSelect(btn.dataset.cat));
+  });
+
+  return activeCategory;
+}
+
 function groupByCategory(entries) {
   const groups = {};
   entries.forEach(([id, it]) => {
@@ -530,18 +566,41 @@ function groupByCategory(entries) {
   });
   return Object.keys(groups).sort().map(cat => [cat, groups[cat]]);
 }
- 
+
+function cssEscape(s) { return (window.CSS && CSS.escape) ? CSS.escape(s) : s; }
+
+function captureCellFocus(container) {
+  const el = document.activeElement;
+  if (el && el.classList && el.classList.contains('cell-input') && container.contains(el)) {
+    return { id: el.dataset.id, field: el.dataset.field, start: el.selectionStart, end: el.selectionEnd };
+  }
+  return null;
+}
+function restoreCellFocus(container, info) {
+  if (!info) return;
+  const el = container.querySelector(`.cell-input[data-id="${cssEscape(info.id)}"][data-field="${info.field}"]`);
+  if (el) {
+    el.focus();
+    try { el.setSelectionRange(info.start, info.end); } catch (e) {}
+  }
+}
+
 function renderItems() {
   const wrap = document.getElementById('itemsTableWrap');
+  const focusInfo = captureCellFocus(wrap);
   const q = (document.getElementById('itemSearch').value || '').toLowerCase();
-  const catFilter = document.getElementById('itemCategoryFilter').value;
-  populateCategoryFilter(document.getElementById('itemCategoryFilter'), items);
- 
-  const rows = Object.entries(items)
+
+  const allRows = Object.entries(items)
     .filter(([id, it]) => it.name.toLowerCase().includes(q))
-    .filter(([id, it]) => !catFilter || (it.category || 'Uncategorized') === catFilter)
     .sort((a, b) => a[1].name.localeCompare(b[1].name));
- 
+
+  itemActiveCategory = renderCatTabs('itemCatTabs', allRows, itemActiveCategory, (key) => {
+    itemActiveCategory = key;
+    renderItems();
+  });
+
+  const rows = allRows.filter(([id, it]) => !itemActiveCategory || tabGroupOf(it.category) === itemActiveCategory);
+
   // Stats
   const total = Object.keys(items).length;
   const avgMargin = rows.length ? rows.reduce((s, [id, it]) => {
@@ -552,14 +611,14 @@ function renderItems() {
     <div class="stat-card"><div class="label">Total items</div><div class="value">${total}</div></div>
     <div class="stat-card"><div class="label">Avg buy→sell margin</div><div class="value ${avgMargin>=0?'profit':'loss'}">${fmt(avgMargin)}</div></div>
   `;
- 
+
   if (rows.length === 0) {
     wrap.innerHTML = `<div class="empty-state"><h3>No items yet</h3><p>Add your first item to start tracking prices.</p></div>`;
     return;
   }
- 
+
   const grouped = groupByCategory(rows);
- 
+
   wrap.innerHTML = `
     <table>
       <thead><tr>
@@ -573,9 +632,9 @@ function renderItems() {
             return `<tr>
               <td data-label="Item">${escapeHtml(it.name)}</td>
               <td data-label="Category"><span class="pill">${escapeHtml(it.category || '—')}</span></td>
-              <td data-label="Buy" class="num">${fmt(it.buyPrice)}</td>
-              <td data-label="Sell" class="num">${fmt(it.sellPrice)}</td>
-              <td data-label="Margin" class="num ${margin>=0?'profit':'loss'}">${margin>=0?'+':''}${fmt(margin)}</td>
+              <td data-label="Buy" class="num"><input type="number" class="cell-input" inputmode="decimal" min="0" step="0.01" placeholder="—" data-id="${id}" data-field="buyPrice" value="${it.buyPrice ?? ''}"></td>
+              <td data-label="Sell" class="num"><input type="number" class="cell-input" inputmode="decimal" min="0" step="0.01" placeholder="—" data-id="${id}" data-field="sellPrice" value="${it.sellPrice ?? ''}"></td>
+              <td data-label="Margin" class="num margin-cell ${margin>=0?'profit':'loss'}">${margin>=0?'+':''}${fmt(margin)}</td>
               <td>
                 <div class="row-actions">
                   <button class="icon-btn" data-edit="${id}" title="Edit">✎</button>
@@ -588,11 +647,64 @@ function renderItems() {
       </tbody>
     </table>
   `;
- 
+
   wrap.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => openItemModal(b.dataset.edit)));
   wrap.querySelectorAll('[data-del]').forEach(b => b.addEventListener('click', () => deleteItem(b.dataset.del)));
+  restoreCellFocus(wrap, focusInfo);
 }
- 
+
+// ---------- Inline price editing (Items table) ----------
+// Delegated on the wrapper so listeners survive innerHTML rebuilds.
+function updateLiveMargin(input) {
+  const row = input.closest('tr');
+  if (!row) return;
+  const buyInput = row.querySelector('[data-field="buyPrice"]');
+  const sellInput = row.querySelector('[data-field="sellPrice"]');
+  if (!buyInput || !sellInput) return;
+  const buy = buyInput.value === '' ? 0 : Number(buyInput.value);
+  const sell = sellInput.value === '' ? 0 : Number(sellInput.value);
+  const margin = sell - buy;
+  const marginCell = row.querySelector('.margin-cell');
+  if (marginCell) {
+    marginCell.textContent = (margin >= 0 ? '+' : '') + fmt(margin);
+    marginCell.classList.toggle('profit', margin >= 0);
+    marginCell.classList.toggle('loss', margin < 0);
+  }
+}
+
+async function commitCellEdit(el) {
+  const id = el.dataset.id;
+  const field = el.dataset.field;
+  const it = items[id];
+  if (!it) return;
+  const raw = el.value.trim();
+  const value = raw === '' ? null : Number(raw);
+  if (raw !== '' && isNaN(value)) { showToast('Enter a valid number'); return; }
+  const current = it[field] ?? null;
+  if (current === value) return; // nothing changed, skip the write
+  try {
+    await setDoc(doc(db, 'items', id), { [field]: value, updatedAt: serverTimestamp(), updatedBy: currentUser.email }, { merge: true });
+    el.classList.add('cell-saved');
+    setTimeout(() => el.classList.remove('cell-saved'), 500);
+  } catch (e) {
+    showToast('Save failed: ' + e.message);
+  }
+}
+
+const itemsTableWrapEl = document.getElementById('itemsTableWrap');
+itemsTableWrapEl.addEventListener('input', (e) => {
+  if (e.target.classList.contains('cell-input')) updateLiveMargin(e.target);
+});
+itemsTableWrapEl.addEventListener('change', (e) => {
+  if (e.target.classList.contains('cell-input')) commitCellEdit(e.target);
+});
+itemsTableWrapEl.addEventListener('keydown', (e) => {
+  if (e.target.classList.contains('cell-input') && e.key === 'Enter') {
+    e.preventDefault();
+    e.target.blur();
+  }
+});
+
 // ---------- Render: Crafting ----------
 function renderCrafting() {
   const wrap = document.getElementById('craftingTableWrap');
@@ -600,12 +712,12 @@ function renderCrafting() {
   const rows = Object.entries(items)
     .filter(([id, it]) => it.recipe && it.recipe.length > 0 && it.name.toLowerCase().includes(q))
     .sort((a, b) => a[1].name.localeCompare(b[1].name));
- 
+
   if (rows.length === 0) {
     wrap.innerHTML = `<div class="empty-state"><h3>No recipes yet</h3><p>Add ingredients to an item to see its crafting margin here.</p></div>`;
     return;
   }
- 
+
   wrap.innerHTML = `
     <table>
       <thead><tr>
@@ -632,65 +744,43 @@ function renderCrafting() {
     </table>
   `;
 }
- 
+
 // ---------- Render: Inventory ----------
-function renderInvCatTabs(allRows) {
-  const tabsWrap = document.getElementById('invCatTabs');
-  const cats = Array.from(new Set(allRows.map(([id, it]) => it.category || 'Uncategorized'))).sort();
- 
-  // If the currently active category no longer exists (e.g. renamed/deleted), fall back to "All"
-  if (invActiveCategory && !cats.includes(invActiveCategory)) invActiveCategory = '';
- 
-  const tabDefs = [{ key: '', label: 'All', count: allRows.length }].concat(
-    cats.map(c => ({ key: c, label: c, count: allRows.filter(([id, it]) => (it.category || 'Uncategorized') === c).length }))
-  );
- 
-  tabsWrap.innerHTML = tabDefs.map(t => `
-    <button class="cat-tab ${invActiveCategory === t.key ? 'active' : ''}" data-cat="${escapeHtml(t.key)}">
-      ${escapeHtml(t.label)}<span class="count">${t.count}</span>
-    </button>
-  `).join('');
- 
-  tabsWrap.querySelectorAll('.cat-tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      invActiveCategory = btn.dataset.cat;
-      renderInventory();
-    });
-  });
-}
- 
 function renderInventory() {
   const wrap = document.getElementById('inventoryTableWrap');
   const q = (document.getElementById('invSearch').value || '').toLowerCase();
- 
+
   const allRows = Object.entries(items)
     .filter(([id, it]) => it.name.toLowerCase().includes(q))
     .sort((a, b) => a[1].name.localeCompare(b[1].name));
- 
-  renderInvCatTabs(allRows);
- 
-  const rows = allRows.filter(([id, it]) => !invActiveCategory || (it.category || 'Uncategorized') === invActiveCategory);
- 
+
+  invActiveCategory = renderCatTabs('invCatTabs', allRows, invActiveCategory, (key) => {
+    invActiveCategory = key;
+    renderInventory();
+  });
+
+  const rows = allRows.filter(([id, it]) => !invActiveCategory || tabGroupOf(it.category) === invActiveCategory);
+
   const totalValue = rows.reduce((s, [id, it]) => s + (Number(it.qty || 0) * Number(it.sellPrice || 0)), 0);
   const totalUnits = rows.reduce((s, [id, it]) => s + Number(it.qty || 0), 0);
   document.getElementById('invStats').innerHTML = `
     <div class="stat-card"><div class="label">Total units</div><div class="value">${fmt(totalUnits)}</div></div>
     <div class="stat-card"><div class="label">Est. sell value</div><div class="value">${fmt(totalValue)}</div></div>
   `;
- 
+
   if (rows.length === 0) {
     wrap.innerHTML = `<div class="empty-state"><h3>Nothing in stock</h3><p>Inventory quantities appear here once items are added.</p></div>`;
     return;
   }
- 
+
   const grouped = groupByCategory(rows);
- 
+
   wrap.innerHTML = `
     <table>
       <thead><tr><th>Item</th><th class="num">Quantity</th><th class="num">Est. value</th><th></th></tr></thead>
       <tbody>
         ${grouped.map(([cat, catRows]) => `
-          ${invActiveCategory ? '' : `<tr class="category-row"><td colspan="4">${escapeHtml(cat)} · ${catRows.length}</td></tr>`}
+          <tr class="category-row"><td colspan="4">${escapeHtml(cat)} · ${catRows.length}</td></tr>
           ${catRows.map(([id, it]) => `
             <tr>
               <td data-label="Item">${escapeHtml(it.name)}</td>
@@ -708,11 +798,11 @@ function renderInventory() {
       </tbody>
     </table>
   `;
- 
+
   wrap.querySelectorAll('[data-qty-up]').forEach(b => b.addEventListener('click', () => adjustQty(b.dataset.qtyUp, 1)));
   wrap.querySelectorAll('[data-qty-down]').forEach(b => b.addEventListener('click', () => adjustQty(b.dataset.qtyDown, -1)));
 }
- 
+
 async function adjustQty(id, delta) {
   const it = items[id];
   if (!it) return;
@@ -721,14 +811,14 @@ async function adjustQty(id, delta) {
     await setDoc(doc(db, 'items', id), { ...it, qty: newQty, updatedAt: serverTimestamp(), updatedBy: currentUser.email }, { merge: true });
   } catch (e) { showToast('Update failed: ' + e.message); }
 }
- 
+
 // ---------- Item modal ----------
 const itemModalOverlay = document.getElementById('itemModalOverlay');
 document.getElementById('addItemBtn').addEventListener('click', () => openItemModal(null));
 document.getElementById('itemModalClose').addEventListener('click', closeItemModal);
 document.getElementById('itemModalCancel').addEventListener('click', closeItemModal);
 itemModalOverlay.addEventListener('click', (e) => { if (e.target === itemModalOverlay) closeItemModal(); });
- 
+
 function openItemModal(id) {
   editingItemId = id;
   const it = id ? items[id] : null;
@@ -746,7 +836,7 @@ function closeItemModal() {
   itemModalOverlay.classList.remove('open');
   editingItemId = null;
 }
- 
+
 function renderRecipeRows(recipe) {
   const list = document.getElementById('recipeList');
   list.innerHTML = '';
@@ -772,7 +862,7 @@ document.getElementById('addIngredientBtn').addEventListener('click', () => {
   const firstId = Object.keys(items).find(id => id !== editingItemId);
   addRecipeRow(firstId, 1);
 });
- 
+
 document.getElementById('itemModalSave').addEventListener('click', async () => {
   const name = document.getElementById('fName').value.trim();
   if (!name) { showToast('Item name is required'); return; }
@@ -785,7 +875,7 @@ document.getElementById('itemModalSave').addEventListener('click', async () => {
     const qtyInput = row.querySelector('input');
     return { itemId: select.value, qty: Number(qtyInput.value || 1) };
   }).filter(r => r.itemId);
- 
+
   const id = editingItemId || slugify(name) + '-' + Date.now().toString(36);
   try {
     await setDoc(doc(db, 'items', id), {
@@ -798,7 +888,7 @@ document.getElementById('itemModalSave').addEventListener('click', async () => {
     showToast('Save failed: ' + e.message);
   }
 });
- 
+
 async function deleteItem(id) {
   const it = items[id];
   if (!confirm(`Delete "${it?.name}"? This can't be undone.`)) return;
@@ -809,12 +899,12 @@ async function deleteItem(id) {
     showToast('Delete failed: ' + e.message);
   }
 }
- 
+
 function slugify(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
 function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
- 
+
 // ---------- JSON Import ----------
 // Accepts an array of: { name, category, buyPrice, sellPrice, qty, recipe: [{ name, qty }] }
 // Recipe ingredients are matched/created by name automatically.
@@ -831,21 +921,21 @@ document.getElementById('importFile').addEventListener('change', async (e) => {
   }
   e.target.value = '';
 });
- 
+
 async function importItems(data) {
   if (!Array.isArray(data)) { showToast('Import file must be a JSON array'); return; }
- 
+
   // Build a working name -> id map, starting with items already in Firestore.
   const nameToId = {};
   Object.entries(items).forEach(([id, it]) => { nameToId[it.name.toLowerCase()] = id; });
- 
+
   // Pass 1: ensure every referenced item (including bare ingredients) has an id, without recipes yet.
   const allNames = new Set();
   data.forEach(entry => {
     allNames.add(entry.name);
     (entry.recipe || []).forEach(ing => allNames.add(ing.name));
   });
- 
+
   let created = 0, updated = 0;
   for (const name of allNames) {
     if (!nameToId[name.toLowerCase()]) {
@@ -853,23 +943,23 @@ async function importItems(data) {
       nameToId[name.toLowerCase()] = id;
     }
   }
- 
+
   // Pass 2: write each item from the import data, resolving its recipe to ids.
   // Items that only appear as bare ingredient references (not in `data`) get a minimal placeholder doc.
   const dataByName = {};
   data.forEach(entry => { dataByName[entry.name.toLowerCase()] = entry; });
- 
+
   for (const name of allNames) {
     const key = name.toLowerCase();
     const id = nameToId[key];
     const entry = dataByName[key];
     const existing = items[id];
- 
+
     const recipe = entry && entry.recipe ? entry.recipe.map(ing => ({
       itemId: nameToId[ing.name.toLowerCase()],
       qty: Number(ing.qty || 1)
     })).filter(r => r.itemId) : (existing ? existing.recipe || [] : []);
- 
+
     const payload = {
       name: entry ? entry.name : (existing ? existing.name : name),
       category: entry && entry.category !== undefined ? entry.category : (existing ? existing.category || '' : ''),
@@ -880,7 +970,7 @@ async function importItems(data) {
       updatedAt: serverTimestamp(),
       updatedBy: currentUser.email
     };
- 
+
     try {
       await setDoc(doc(db, 'items', id), payload, { merge: true });
       items[id] = payload; // keep local cache warm for subsequent name resolution this pass
@@ -892,10 +982,9 @@ async function importItems(data) {
   }
   showToast(`Import complete — ${created} added, ${updated} updated`);
 }
- 
+
 // search listeners
 document.getElementById('itemSearch').addEventListener('input', renderItems);
-document.getElementById('itemCategoryFilter').addEventListener('change', renderItems);
 document.getElementById('craftSearch').addEventListener('input', renderCrafting);
 document.getElementById('invSearch').addEventListener('input', renderInventory);
 </script>
