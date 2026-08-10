@@ -877,7 +877,7 @@ function renderItems() {
               <td data-label="Margin" class="num margin-cell ${margin>=0?'profit':'loss'}">${margin>=0?'+':''}${fmt(margin)}</td>
               <td>
                 <div class="row-actions">
-                  <button class="icon-btn" data-edit="${id}" title="Edit">✎</button>
+                  ${currentRole === 'admin' ? `<button class="icon-btn" data-edit="${id}" title="Edit">✎</button>` : ''}
                   <button class="icon-btn" data-del="${id}" title="Delete">🗑</button>
                 </div>
               </td>
