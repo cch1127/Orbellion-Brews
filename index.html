@@ -1467,7 +1467,7 @@ function renderOrders() {
               ${canManage ? `<div class="row-actions">
                 ${status !== 'fulfilled' ? `<button class="icon-btn" data-fulfill="${id}" title="Mark fulfilled">✓</button>` : ''}
                 ${status !== 'cancelled' ? `<button class="icon-btn" data-cancel="${id}" title="Cancel">✕</button>` : ''}
-                <button class="icon-btn" data-del-order="${id}" title="Delete">🗑</button>
+                ${currentRole === 'admin' ? `<button class="icon-btn" data-del-order="${id}" title="Delete">🗑</button>` : ''}
               </div>` : ''}
             </td>
           </tr>`;
