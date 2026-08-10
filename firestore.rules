@@ -1,131 +1,59 @@
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const admin = require("firebase-admin");
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
 
-admin.initializeApp();
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-const LOGIN_DOMAIN = "orbellionbrews.local";
-function usernameToEmail(username) {
-  return (
-    username
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9._-]/g, "") + "@" + LOGIN_DOMAIN
-  );
+    // Members and admins are anyone with a real (non-anonymous) account —
+    // i.e. anyone the createMember Cloud Function has stamped with a role.
+    function isMember() {
+      return isSignedIn() && request.auth.token.role in ['member', 'admin'];
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.role == 'admin';
+    }
+
+    // Item catalog: guests need to read it to know what they can order.
+    // Members can add items, edit categories/recipes, and adjust quantities,
+    // but only admins can set or change buyPrice/sellPrice.
+    function pricesUnchanged() {
+      return request.resource.data.buyPrice == resource.data.buyPrice
+          && request.resource.data.sellPrice == resource.data.sellPrice;
+    }
+    function noPricesSet() {
+      return request.resource.data.buyPrice == null
+          && request.resource.data.sellPrice == null;
+    }
+    match /items/{itemId} {
+      allow read: if isSignedIn();
+      allow create: if isMember() && (isAdmin() || noPricesSet());
+      allow update: if isMember() && (isAdmin() || pricesUnchanged());
+      allow delete: if isMember();
+    }
+
+    // Orders: anyone signed in (guest or member) can place one, and anyone
+    // signed in can view the queue. Managing an order (marking it fulfilled,
+    // cancelling, deleting) is member/admin only.
+    match /orders/{orderId} {
+      allow create: if isSignedIn();
+      allow read: if isSignedIn();
+      allow update, delete: if isMember();
+    }
+
+    // Account directory: only written by the createMember Cloud Function
+    // (Admin SDK bypasses these rules entirely). Admins can list everyone;
+    // a person can read their own profile.
+    match /users/{userId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+      allow write: if false;
+    }
+
+    // Default deny for anything else.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
 }
-
-/**
- * Callable function: createMember({ username, displayName, password, role })
- *
- * Only callable by an existing admin (checked via the caller's `role` custom
- * claim). Creates a new Firebase Auth account for the person, stamps it with
- * a `role` ('member' | 'admin') and `displayName` custom claim, and mirrors
- * a lightweight profile into Firestore's `users` collection so the admin
- * panel can list everyone (Admin SDK is the only thing that can list Auth
- * users directly, so the client reads this mirror instead).
- *
- * There is deliberately no self-registration path — accounts only come from
- * this function, and only an admin can call it.
- */
-exports.createMember = onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Sign in before adding people.");
-  }
-  if (request.auth.token.role !== "admin") {
-    throw new HttpsError(
-      "permission-denied",
-      "Only an admin account can add people."
-    );
-  }
-
-  const { username, displayName, password, role } = request.data || {};
-
-  if (!username || !displayName || !password) {
-    throw new HttpsError(
-      "invalid-argument",
-      "username, displayName, and password are all required."
-    );
-  }
-  if (password.length < 6) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Password must be at least 6 characters."
-    );
-  }
-  const finalRole = role === "admin" ? "admin" : "member";
-
-  const email = usernameToEmail(username);
-
-  let userRecord;
-  try {
-    userRecord = await admin.auth().createUser({
-      email,
-      password,
-      displayName,
-    });
-  } catch (err) {
-    if (err.code === "auth/email-already-exists") {
-      throw new HttpsError("already-exists", "That Login ID is already taken.");
-    }
-    throw new HttpsError("internal", "Could not create the account: " + err.message);
-  }
-
-  await admin.auth().setCustomUserClaims(userRecord.uid, {
-    role: finalRole,
-    displayName,
-  });
-
-  await admin.firestore().collection("users").doc(userRecord.uid).set({
-    username: username.trim(),
-    displayName,
-    role: finalRole,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    createdBy: request.auth.uid,
-  });
-
-  return { success: true, uid: userRecord.uid };
-});
-
-/**
- * Callable function: removeMember({ uid })
- *
- * Admin-only. Deletes the person's Firebase Auth account (so they can no
- * longer sign in) and their profile doc in Firestore's `users` collection.
- * Does not touch anything they've already created — items, orders, and
- * updatedBy/createdBy stamps referencing their old uid are left as-is,
- * since deleting those would erase real ledger history.
- */
-exports.removeMember = onCall(async (request) => {
-  if (!request.auth) {
-    throw new HttpsError("unauthenticated", "Sign in before removing people.");
-  }
-  if (request.auth.token.role !== "admin") {
-    throw new HttpsError(
-      "permission-denied",
-      "Only an admin account can remove people."
-    );
-  }
-
-  const { uid } = request.data || {};
-  if (!uid) {
-    throw new HttpsError("invalid-argument", "uid is required.");
-  }
-  if (uid === request.auth.uid) {
-    throw new HttpsError(
-      "failed-precondition",
-      "You can't remove your own account. Have another admin do it."
-    );
-  }
-
-  try {
-    await admin.auth().deleteUser(uid);
-  } catch (err) {
-    if (err.code !== "auth/user-not-found") {
-      throw new HttpsError("internal", "Could not delete the account: " + err.message);
-    }
-    // Already gone from Auth — still clean up the Firestore profile below.
-  }
-
-  await admin.firestore().collection("users").doc(uid).delete();
-
-  return { success: true };
-});
