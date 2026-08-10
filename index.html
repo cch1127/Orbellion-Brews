@@ -878,7 +878,7 @@ function renderItems() {
               <td>
                 <div class="row-actions">
                   ${currentRole === 'admin' ? `<button class="icon-btn" data-edit="${id}" title="Edit">✎</button>` : ''}
-                  <button class="icon-btn" data-del="${id}" title="Delete">🗑</button>
+                  ${currentRole === 'admin' ? `<button class="icon-btn" data-del="${id}" title="Delete">🗑</button>` : ''}
                 </div>
               </td>
             </tr>`;
